@@ -1,9 +1,11 @@
+
 {
-    "rds_host": "database-1.cdwv4a0gxltf.us-east-1.rds.amazonaws.com",
+    "rds_host": "database-newbee.ca2j33wsqzo3.us-east-1.rds.amazonaws.com",
     "rds_port": "3306",
-    "rds_user": "lihe14569",
-    "rds_password": "Yj881003",
-    "rds_db": "FIFA",
+    "rds_user": "newbee",
+    "rds_password" : "newbee1234",
+    "rds_db": "Yelp_project",
     "server_host": "127.0.0.1",
-    "server_port": "8080"
+    "server_port":"8080"
+
 }
