@@ -10,7 +10,7 @@ import {
 class MenuBar extends React.Component {
   render() {
     return (
-      <Navbar type="light" theme="primary" expand="md">
+      <Navbar type="dark" theme="danger" expand="md">
         <NavbarBrand href="/">Yelp Dataset</NavbarBrand>
         <Nav navbar>
           <NavItem>
@@ -19,15 +19,15 @@ class MenuBar extends React.Component {
             </NavLink>
           </NavItem>
           <NavItem>
+            <NavLink active href="/restaurants" >
+              Restaurant Recommender
+            </NavLink>
+          </NavItem>
+          <NavItem>
             <NavLink active href="/friends">
               Find Friends
             </NavLink>
           </NavItem>
-          {/* <NavItem>
-            <NavLink active href="/matches" >
-              Matches
-            </NavLink>
-          </NavItem> */}
         </Nav>
       </Navbar>
     )
