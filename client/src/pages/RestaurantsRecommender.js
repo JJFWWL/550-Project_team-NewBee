@@ -24,31 +24,42 @@ import { format } from 'd3-format';
 
 
 import MenuBar from '../components/MenuBar';
-import { getPlayerSearch, getPlayer } from '../fetcher'
+import { getAllRestaurants, getRestaurantSearch, getRestaurant } from '../fetcher'
 const wideFormat = format('.3r');
 
 const datasource1 = [
   {
-    key: '1',
+    business_id: '1',
     name: 'Mike\'s Grill',
-    location: 'OR / Portland',
+    city: 'Portland',
+    State: 'OR',
     stars: 5,
-    reviews: 10,
+    review_count: 10,
     categories: 'American, Mexican',
-    price: 4
+    RestaurantsPriceRange2: 2,
+    photo_id:'__0nof27AJTcA_es7-1PCw'
   },
   {
-    key: '2',
+    business_id: '2',
     name: 'John\'s Sushi',
-    location: 'MA / Boston',
+    city: 'Boston',
+    State: 'MA',
     stars: 4,
-    reviews: 100,
+    review_count: 100,
     categories: 'Japanese',
-    price: 2
+    RestaurantsPriceRange2: 4,
+    photo_id:'__0nof27AJTcA_es7-1PCw'
   },
 ];
 
-const locations = [
+const priceOptions = [
+  {label: '$', value: '1'},
+  {label: '$$', value: '2'},
+  {label: '$$$', value: '3'},
+  {label: '$$$$', value: '4'},
+]
+
+const locationOptions = [
   {value:'MA',
     label:'Massachusetts',
     children: [
@@ -282,20 +293,29 @@ const locations = [
 
 ]
 
-const playerColumns = [
+const restaurantColumns = [
     {
         title: 'Name',
         dataIndex: 'name',
         key: 'name',
-        sorter: (a, b) => a.Name.localeCompare(b.Name),
-        render: (text, row) => <a href={`/players?id=${row.PlayerId}`}>{text}</a>
+        sorter: (a, b) => a.name.localeCompare(b.name),
+        render: (text, row) => <a href={`/restaurants?id=${row.business_id}`}>{text}</a>
     },
     {
-        title: 'Location',
-        dataIndex: 'location',
-        key: 'location',
-        sorter: (a, b) => a.location.localeCompare(b.location)
-
+        title: 'City',
+        dataIndex: 'city',
+        key: 'city',
+        sorter: (a, b) => a.city.localeCompare(b.city)
+    },
+    {
+        title: 'State',
+        dataIndex: 'State',
+        key: 'State',
+        filters: [
+          {text: 'MA', value: 'MA'},
+          {text: 'OR', value: 'OR'}
+        ],
+        onFilter: (value, record) => record.State === value,
     },
     // TASK 19: copy over your answers for tasks 7 - 9 to add columns for potential, club, and value
     {
@@ -306,9 +326,9 @@ const playerColumns = [
     },
     {
         title:"Review Count",
-        dataIndex:"reviews",
-        key:"reviews",
-        sorter: (a, b) => a.reviews - b.reviews
+        dataIndex:"review_count",
+        key:"review_count",
+        sorter: (a, b) => a.review_count - b.review_count
     },
     {
         title:"Categories",
@@ -317,8 +337,8 @@ const playerColumns = [
     },
     {
         title:"Price Level",
-        dataIndex:"price",
-        key:"price"
+        dataIndex:"RestaurantsPriceRange2",
+        key:"RestaurantsPriceRange2"
     }
 ];
 
@@ -327,25 +347,28 @@ class RestaurantsRecommender extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            restaurantQuery: '',
-            locationQuery: 'Massachusetts / Boston',
+            nameQuery: '',
+            stateQuery: '',
+            cityQuery: '',
+            zipQuery: '',
             categoryQuery: '',
             ratingHighQuery: 5,
             ratingLowQuery: 1,
-            reviewHighQuery: 200,
-            reviewLowQuery: 0,
-            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : 229594,
+            priceQuery: '',
+            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '__CskSr6YIhxxZYt9445Fg',
             selectedRestaurantDetails: null,
-            playersResults: []
+            restaurantsResults: []
 
         }
 
         this.updateSearchResults = this.updateSearchResults.bind(this)
+        this.resetQueries = this.resetQueries.bind(this)
         this.handleNameQueryChange = this.handleNameQueryChange.bind(this)
         this.handleLocationQueryChange = this.handleLocationQueryChange.bind(this)
-        this.handleClubQueryChange = this.handleClubQueryChange.bind(this)
+        this.handleZipQueryChange = this.handleZipQueryChange.bind(this)
+        this.handleCategoryQueryChange = this.handleCategoryQueryChange.bind(this)
         this.handleRatingChange = this.handleRatingChange.bind(this)
-        this.handlePotentialChange = this.handlePotentialChange.bind(this)
+        this.handlePriceChange = this.handlePriceChange.bind(this)
     }
 
 
@@ -354,14 +377,17 @@ class RestaurantsRecommender extends React.Component {
         this.setState({ nameQuery: event.target.value })
     }
 
-    handleClubQueryChange(event) {
-        // TASK 20: update state variables appropriately. See handleNameQueryChange(event) for reference
-        this.setState({clubQuery:event.target.value})
+    handleLocationQueryChange(value, selectedLocations) {
+        this.setState({stateQuery: selectedLocations.map(o => o.label)[0] == 'Massachusetts'? 'MA':'OR',
+                        cityQuery: selectedLocations.map(o => o.label)[1]})
     }
 
-    handleLocationQueryChange(value, selectedLocations) {
-        // TASK 21: update state variables appropriately. See handleNameQueryChange(event) for reference
-        this.setState({locationQuery: selectedLocations.map(o => o.label).join(' / ')})
+    handleZipQueryChange(event) {
+        this.setState({zipQuery:event.target.value})
+    }
+
+    handleCategoryQueryChange(event) {
+        this.setState({categoryQuery:event.target.value})
     }
 
     handleRatingChange(value) {
@@ -369,31 +395,36 @@ class RestaurantsRecommender extends React.Component {
         this.setState({ ratingHighQuery: value[1] })
     }
 
-    handlePotentialChange(value) {
-        // TASK 22: parse value and update state variables appropriately. See handleRatingChange(value) for reference
-        this.setState({potLowQuery: value[0]})
-        this.setState({potHighQuery: value[1]})
+    handlePriceChange(event) {
+        this.setState({priceQuery: event.target.value})
     }
 
-
-
     updateSearchResults() {
-
-        //TASK 23: call getPlayerSearch and update playerResults in state. See componentDidMount() for a hint
-        getPlayerSearch(this.state.nameQuery, this.state.locationQuery, this.state.clubQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.potHighQuery, this.state.potLowQuery, null, null).then(res => {
-            this.setState({playersResults:res.results})
+        getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
+            this.setState({restaurantsResults:res.results})
         })
+    }
+
+    resetQueries() {
+      this.setState({ nameQuery: '' })
+      this.setState({ stateQuery: '' })
+      this.setState({ cityQuery: '' })
+      this.setState({ zipQuery: '' })
+      this.setState({ categoryQuery: '' })
+      this.setState({ ratingHighQuery: 5 })
+      this.setState({ ratingLowQuery: 1 })
+      this.setState({ priceQuery: '' })
     }
 
     componentDidMount() {
-        getPlayerSearch(this.state.nameQuery, this.state.locationQuery, this.state.clubQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.potHighQuery, this.state.potLowQuery, null, null).then(res => {
-            this.setState({ playersResults: res.results })
+        getRestaurantSearch(this.state.nameQuery, this.state.locationQuery, this.state.clubQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.potHighQuery, this.state.potLowQuery, null, null).then(res => {
+            this.setState({ restaurantsResults: res.results })
         })
 
-        // TASK 25: call getPlayer with the appropriate parameter and set update the correct state variable.
+        // TASK 25: call getRestaurant with the appropriate parameter and set update the correct state variable.
         // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
-        getPlayer(this.state.selectedPlayerId).then(res => {
-            this.setState({selectedPlayerDetails: res.results[0]})
+        getRestaurant(this.state.selectedRestaurantId).then(res => {
+            this.setState({selectedRestaurantDetails: res.results[0]})
         })
     }
 
@@ -405,51 +436,44 @@ class RestaurantsRecommender extends React.Component {
                 <MenuBar />
                 <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
                     <Row>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '25vw', margin: '0 auto' }}>
                             <label>Restaurant</label>
-                            <FormInput placeholder="Bradley's Bar & Grill" value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
+                            <FormInput placeholder={this.state.nameQuery? this.state.nameQuery : 'e.g. Bradley\'s Bar & Grill'} value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
                         </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
                             <label>Location</label>
                             <br/>
-                            {this.state.locationQuery}
-                            <br/>
-                            <Cascader options={locations} onChange={this.handleLocationQueryChange}>
+                            <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
+                            <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
                             <a href="#">Change city</a>
                             </Cascader>
                         </FormGroup></Col>
-                        {/* TASK 26: Create a column for Club, using the elements and style we followed in the above two columns. Use the onChange method (handleClubQueryChange)  */}
                         <Col flex={2}><FormGroup style={{ width: '10vw', margin: '0 auto' }}>
                             <label>Zip</label>
-                            <FormInput placeholder="02108" value={this.state.ClubQuery} onChange={this.handleClubQueryChange} />
+                            <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
                         </FormGroup></Col>
                         <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
                             <label>Category</label>
-                            <FormInput placeholder="American" value={this.state.ClubQuery} onChange={this.handleClubQueryChange} />
+                            <FormInput placeholder={this.state.categoryQuery? this.state.categoryQuery : 'e.g. American'} value={this.state.categoryQuery} onChange={this.handleCategoryQueryChange} />
                         </FormGroup></Col>
 
                     </Row>
                     <br></br>
                     <Row>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
                             <label>Stars</label>
-
-                            <Slider range defaultValue={[3, 5]} max={5} min={1} onChange={this.handleRatingChange} danger/>
-
+                            <Slider range value={[this.state.ratingLowQuery,this.state.ratingHighQuery]} max={5} min={1} onChange={this.handleRatingChange}/>
                         </FormGroup></Col>
-                        {/* TASK 27: Create a column with a label and slider in a FormGroup item for filtering by Potential. See the column above for reference and use the onChange method (handlePotentialChange)  */}
                         <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
                             <label>Price Level</label>
-                            <Radio.Group onChange={this.handlePotentialChange}>
-                              <Radio.Button value="1">$</Radio.Button>
-                              <Radio.Button value="2">$$</Radio.Button>
-                              <Radio.Button value="3">$$$</Radio.Button>
-                              <Radio.Button value="4">$$$$</Radio.Button>
-                            </Radio.Group>
+                            <Radio.Group options={priceOptions} value={this.state.priceQuery} onChange={this.handlePriceChange} optionType="button"/>
                         </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '10vw' }}>
+                        <Col flex={2}>
                             <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.updateSearchResults}>Search</Button>
-                        </FormGroup></Col>
+                            &nbsp;
+                            <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
+                        </Col>
+
 
                     </Row>
 
@@ -460,69 +484,69 @@ class RestaurantsRecommender extends React.Component {
                     <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
                     <h3>Restaurants</h3>
 
-                    <Table dataSource={datasource1/*this.state.playersResults*/} columns={playerColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
+                    <Table dataSource={/*datasource1*/this.state.restaurantsResults} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
                     <BackTop />
                     </div>
                 <Divider />
 
-                {this.state.selectedPlayerDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
+                {this.state.selectedRestaurantDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
                     <Card>
 
                         <CardBody>
                         <Row gutter='30' align='middle' justify='center'>
                             <Col flex={2} style={{ textAlign: 'left' }}>
-                            <h3>{this.state.selectedPlayerDetails.Name}</h3>
+                            <h3>{this.state.selectedRestaurantDetails.name}</h3>
 
                             </Col>
 
                             <Col flex={2} style={{ textAlign: 'right' }}>
-                            <img src={this.state.selectedPlayerDetails.Photo} referrerpolicy="no-referrer" alt={null} style={{height:'15vh'}}/>
+                            <img src='https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg' referrerpolicy="no-referrer" alt={null} style={{height:'15vh'}}/>
 
                             </Col>
                         </Row>
                             <Row gutter='30' align='middle' justify='left'>
                                 <Col>
-                                <h5>{this.state.selectedPlayerDetails.Club}</h5>
+                                <h5>{this.state.selectedRestaurantDetails.Club}</h5>
                                 </Col>
                                 <Col>
-                                <h5>{this.state.selectedPlayerDetails.JerseyNumber}</h5>
+                                <h5>{this.state.selectedRestaurantDetails.JerseyNumber}</h5>
                                 </Col>
                                 <Col>
-                                <h5>{this.state.selectedPlayerDetails.BestPosition}</h5>
+                                <h5>{this.state.selectedRestaurantDetails.BestPosition}</h5>
                                 </Col>
                             </Row>
                             <br>
                             </br>
                             <Row gutter='30' align='middle' justify='left'>
                                 <Col>
-                                Age: {this.state.selectedPlayerDetails.Age}
+                                Age: {this.state.selectedRestaurantDetails.Age}
                                 </Col>
                                 {/* TASK 28: add two more columns here for Height and Weight, with the appropriate labels as above */}
                                 <Col>
-                                Height: {this.state.selectedPlayerDetails.Height}
+                                Height: {this.state.selectedRestaurantDetails.Height}
                                 </Col>
                                 <Col>
-                                Weight: {this.state.selectedPlayerDetails.Weight}
+                                Weight: {this.state.selectedRestaurantDetails.Weight}
                                 </Col>
                                 <Col flex={2} style={{ textAlign: 'right' }}>
-                                {this.state.selectedPlayerDetails.Location}
-                                    <img src={this.state.selectedPlayerDetails.Flag} referrerpolicy="no-referrer" alt={null} style={{height:'3vh', marginLeft: '1vw'}}/>
+                                {this.state.selectedRestaurantDetails.Location}
+                                    <img src={this.state.selectedRestaurantDetails.Flag} referrerpolicy="no-referrer" alt={null} style={{height:'3vh', marginLeft: '1vw'}}/>
                                 </Col>
 
                             </Row>
                             <Row gutter='30' align='middle' justify='left'>
                                 <Col>
-                                Value: {this.state.selectedPlayerDetails.Value}
+                                Value: {this.state.selectedRestaurantDetails.Value}
                                 </Col>
                                 <Col>
-                                Release Clause: {this.state.selectedPlayerDetails.ReleaseClause}
+                                Release Clause: {this.state.selectedRestaurantDetails.ReleaseClause}
                                 </Col>
                                 {/* TASK 29: Create 2 additional columns for the attributes 'Wage' and 'Contract Valid Until' (use spaces between the words when labelling!) */}
                                 <Col>
-                                Wage: {this.state.selectedPlayerDetails.Wage}
+                                Wage: {this.state.selectedRestaurantDetails.Wage}
                                 </Col>
                                 <Col>
-                                Contract Valid Until: {this.state.selectedPlayerDetails.ContractValidUntil}
+                                Contract Valid Until: {this.state.selectedRestaurantDetails.ContractValidUntil}
                                 </Col>
                             </Row>
                         </CardBody>
@@ -534,26 +558,26 @@ class RestaurantsRecommender extends React.Component {
                             <Row gutter='30' align='middle' justify='center'>
                             <Col flex={2} style={{ textAlign: 'left' }}>
                             <h6>Skill</h6>
-                            <Rate disabled defaultValue={this.state.selectedPlayerDetails.Skill} />
+                            <Rate disabled defaultValue={this.state.selectedRestaurantDetails.Skill} />
                             <h6>Reputation</h6>
                             {/* TASK 30: create a star rating component for 'InternationalReputation'. Make sure you use the 'disabled' option as above to ensure it is read-only*/}
-                            <Rate disabled defaultValue={this.state.selectedPlayerDetails.InternationalReputation} />
+                            <Rate disabled defaultValue={this.state.selectedRestaurantDetails.InternationalReputation} />
                             <h6>International Reputation</h6>
                             <Divider/>
                             <h6>Best Rating</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedPlayerDetails.BestOverallRating} >{this.state.selectedPlayerDetails.BestOverallRating}</Progress>
+                                <Progress style={{ width: '20vw'}} value={this.state.selectedRestaurantDetails.BestOverallRating} >{this.state.selectedRestaurantDetails.BestOverallRating}</Progress>
                                 {/* TASK 31: create the headings and progress bars for 'Potential' and 'Rating'. Use the same style as the one above for 'Best Rating'.*/}
                                 <h6>Potential</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedPlayerDetails.Potential} >{this.state.selectedPlayerDetails.Potential}</Progress>
+                                <Progress style={{ width: '20vw'}} value={this.state.selectedRestaurantDetails.Potential} >{this.state.selectedRestaurantDetails.Potential}</Progress>
                                 <h6>Rating</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedPlayerDetails.Rating} >{this.state.selectedPlayerDetails.Rating}</Progress>
+                                <Progress style={{ width: '20vw'}} value={this.state.selectedRestaurantDetails.Rating} >{this.state.selectedRestaurantDetails.Rating}</Progress>
                                 </Col >
                                 <Col  push={2} flex={2}>
                                 {/*TASK 32: In case the player is a GK, show a radar chart (replacing 'null' below) with the labels: Agility, Ball Control, Passing, Positioning, Stamina, Strength */}
 
-                                    {this.state.selectedPlayerDetails.BestPosition === 'GK'?
+                                    {this.state.selectedRestaurantDetails.BestPosition === 'GK'?
                                     <RadarChart
-                                data={[this.state.selectedPlayerDetails]}
+                                data={[this.state.selectedRestaurantDetails]}
                                 tickFormat={t => wideFormat(t)}
                                 startingAngle={0}
                                 domains={[
@@ -569,7 +593,7 @@ class RestaurantsRecommender extends React.Component {
 
                             />
                                     :<RadarChart
-                                data={[this.state.selectedPlayerDetails]}
+                                data={[this.state.selectedRestaurantDetails]}
                                 tickFormat={t => wideFormat(t)}
                                 startingAngle={0}
                                 domains={[
