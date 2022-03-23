@@ -14,6 +14,13 @@ const getAllPlayers = async (page, pagesize) => {
     return res.json()
 }
 
+const getAllRestaurants = async (page, pagesize) => {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/restaurants?page=${page}&pagesize=${pagesize}`, {
+        method: 'GET',
+    })
+    return res.json()
+}
+
 const getMatch = async (id) => {
     var res = await fetch(`http://${config.server_host}:${config.server_port}/match?id=${id}`, {
         method: 'GET',
@@ -23,6 +30,13 @@ const getMatch = async (id) => {
 
 const getPlayer = async (id) => {
     var res = await fetch(`http://${config.server_host}:${config.server_port}/player?id=${id}`, {
+        method: 'GET',
+    })
+    return res.json()
+}
+
+const getRestaurant = async (id) => {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/restaurant?id=${id}`, {
         method: 'GET',
     })
     return res.json()
@@ -42,14 +56,24 @@ const getPlayerSearch = async (name, nationality, club, rating_high, rating_low,
     return res.json()
 }
 
+const getRestaurantSearch = async (name, state, city, zip, category, rating_high, rating_low, price, page, pagesize) => {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/search/restaurants?Name=${name}&State=${state}&City=${city}&Zip=${zip}&Category=${category}&RatingLow=${rating_low}&RatingHigh=${rating_high}&Price=${price}&page=${page}&pagesize=${pagesize}`, {
+        method: 'GET',
+    })
+    return res.json()
+}
+
 
 
 
 export {
     getAllMatches,
     getAllPlayers,
+    getAllRestaurants,
     getMatch,
     getPlayer,
+    getRestaurant,
     getMatchSearch,
-    getPlayerSearch
+    getPlayerSearch,
+    getRestaurantSearch
 }
