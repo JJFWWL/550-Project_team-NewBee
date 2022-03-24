@@ -14,7 +14,11 @@ import {
     Radio,
     Menu,
     Cascader,
-    BackTop
+    BackTop,
+    Image,
+    Descriptions,
+    Badge,
+    Carousel
 } from 'antd'
 import { StarOutlined, FireOutlined } from '@ant-design/icons';
 import { RadarChart } from 'react-vis';
@@ -342,6 +346,13 @@ const restaurantColumns = [
     }
 ];
 
+const contentStyle = {
+
+  color: '#fff',
+  lineHeight: '160px',
+  textAlign: 'center',
+
+};
 
 class RestaurantsRecommender extends React.Component {
     constructor(props) {
@@ -356,7 +367,21 @@ class RestaurantsRecommender extends React.Component {
             ratingLowQuery: 1,
             priceQuery: '',
             selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '__CskSr6YIhxxZYt9445Fg',
-            selectedRestaurantDetails: null,
+            selectedRestaurantDetails: {
+              business_id: '1',
+              name: 'Mike\'s Grill',
+              city: 'Portland',
+              State: 'OR',
+              stars: 3.5,
+              review_count: 10,
+              categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
+              RestaurantsPriceRange2: 2,
+              photo_id:'__0nof27AJTcA_es7-1PCw',
+              is_open: 1,
+              postal_code: '02934',
+              address: '12345 Montreal St.',
+              Monday: '7:00-21:00'
+            },
             restaurantsResults: []
 
         }
@@ -424,6 +449,7 @@ class RestaurantsRecommender extends React.Component {
         // TASK 25: call getRestaurant with the appropriate parameter and set update the correct state variable.
         // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
         getRestaurant(this.state.selectedRestaurantId).then(res => {
+
             this.setState({selectedRestaurantDetails: res.results[0]})
         })
     }
@@ -482,140 +508,43 @@ class RestaurantsRecommender extends React.Component {
                 <Divider />
                 {/* TASK 24: Copy in the players table from the Home page, but use the following style tag: style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }} - this should be one line of code! */}
                     <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                    <h3>Restaurants</h3>
+                    <h3>Restaurants{this.state.selectedRestaurantId}</h3>
 
-                    <Table dataSource={/*datasource1*/this.state.restaurantsResults} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
+                    <Table dataSource={datasource1/*this.state.restaurantsResults*/} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
                     <BackTop />
                     </div>
                 <Divider />
 
                 {this.state.selectedRestaurantDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                    <Card>
+                <Carousel autoplay /*afterChange={onChange}*/>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                </Carousel>
 
-                        <CardBody>
-                        <Row gutter='30' align='middle' justify='center'>
-                            <Col flex={2} style={{ textAlign: 'left' }}>
-                            <h3>{this.state.selectedRestaurantDetails.name}</h3>
-
-                            </Col>
-
-                            <Col flex={2} style={{ textAlign: 'right' }}>
-                            <img src='https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg' referrerpolicy="no-referrer" alt={null} style={{height:'15vh'}}/>
-
-                            </Col>
-                        </Row>
-                            <Row gutter='30' align='middle' justify='left'>
-                                <Col>
-                                <h5>{this.state.selectedRestaurantDetails.Club}</h5>
-                                </Col>
-                                <Col>
-                                <h5>{this.state.selectedRestaurantDetails.JerseyNumber}</h5>
-                                </Col>
-                                <Col>
-                                <h5>{this.state.selectedRestaurantDetails.BestPosition}</h5>
-                                </Col>
-                            </Row>
-                            <br>
-                            </br>
-                            <Row gutter='30' align='middle' justify='left'>
-                                <Col>
-                                Age: {this.state.selectedRestaurantDetails.Age}
-                                </Col>
-                                {/* TASK 28: add two more columns here for Height and Weight, with the appropriate labels as above */}
-                                <Col>
-                                Height: {this.state.selectedRestaurantDetails.Height}
-                                </Col>
-                                <Col>
-                                Weight: {this.state.selectedRestaurantDetails.Weight}
-                                </Col>
-                                <Col flex={2} style={{ textAlign: 'right' }}>
-                                {this.state.selectedRestaurantDetails.Location}
-                                    <img src={this.state.selectedRestaurantDetails.Flag} referrerpolicy="no-referrer" alt={null} style={{height:'3vh', marginLeft: '1vw'}}/>
-                                </Col>
-
-                            </Row>
-                            <Row gutter='30' align='middle' justify='left'>
-                                <Col>
-                                Value: {this.state.selectedRestaurantDetails.Value}
-                                </Col>
-                                <Col>
-                                Release Clause: {this.state.selectedRestaurantDetails.ReleaseClause}
-                                </Col>
-                                {/* TASK 29: Create 2 additional columns for the attributes 'Wage' and 'Contract Valid Until' (use spaces between the words when labelling!) */}
-                                <Col>
-                                Wage: {this.state.selectedRestaurantDetails.Wage}
-                                </Col>
-                                <Col>
-                                Contract Valid Until: {this.state.selectedRestaurantDetails.ContractValidUntil}
-                                </Col>
-                            </Row>
-                        </CardBody>
-
-                    </Card>
-
-                    <Card style={{marginTop: '2vh'}}>
-                        <CardBody>
-                            <Row gutter='30' align='middle' justify='center'>
-                            <Col flex={2} style={{ textAlign: 'left' }}>
-                            <h6>Skill</h6>
-                            <Rate disabled defaultValue={this.state.selectedRestaurantDetails.Skill} />
-                            <h6>Reputation</h6>
-                            {/* TASK 30: create a star rating component for 'InternationalReputation'. Make sure you use the 'disabled' option as above to ensure it is read-only*/}
-                            <Rate disabled defaultValue={this.state.selectedRestaurantDetails.InternationalReputation} />
-                            <h6>International Reputation</h6>
-                            <Divider/>
-                            <h6>Best Rating</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedRestaurantDetails.BestOverallRating} >{this.state.selectedRestaurantDetails.BestOverallRating}</Progress>
-                                {/* TASK 31: create the headings and progress bars for 'Potential' and 'Rating'. Use the same style as the one above for 'Best Rating'.*/}
-                                <h6>Potential</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedRestaurantDetails.Potential} >{this.state.selectedRestaurantDetails.Potential}</Progress>
-                                <h6>Rating</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedRestaurantDetails.Rating} >{this.state.selectedRestaurantDetails.Rating}</Progress>
-                                </Col >
-                                <Col  push={2} flex={2}>
-                                {/*TASK 32: In case the player is a GK, show a radar chart (replacing 'null' below) with the labels: Agility, Ball Control, Passing, Positioning, Stamina, Strength */}
-
-                                    {this.state.selectedRestaurantDetails.BestPosition === 'GK'?
-                                    <RadarChart
-                                data={[this.state.selectedRestaurantDetails]}
-                                tickFormat={t => wideFormat(t)}
-                                startingAngle={0}
-                                domains={[
-                                    { name: 'Penalties', domain: [0, 100], getValue: d => d.GKPenalties },
-                                    { name: 'Diving', domain: [0, 100], getValue: d => d.GKDiving },
-                                    { name: 'Handling', domain: [0, 100], getValue: d => d.GKHandling },
-                                    { name: 'Kicking', domain: [0, 100], getValue: d => d.GKKicking },
-                                    { name: 'Positioning', domain: [0, 100], getValue: d => d.GKPositioning },
-                                    { name: 'Reflexes', domain: [0, 100], getValue: d => d.GKReflexes }
-                                ]}
-                                width={450}
-                                height={400}
-
-                            />
-                                    :<RadarChart
-                                data={[this.state.selectedRestaurantDetails]}
-                                tickFormat={t => wideFormat(t)}
-                                startingAngle={0}
-                                domains={[
-                                    { name: 'Agility', domain: [0, 100], getValue: d => d.NAdjustedAgility },
-                                    { name: 'Ball Control', domain: [0, 100], getValue: d => d.NBallControl },
-                                    { name: 'Passing', domain: [0, 100], getValue: d => d.NPassing },
-                                    { name: 'Positioning', domain: [0, 100], getValue: d => d.NPositioning },
-                                    { name: 'Stamina', domain: [0, 100], getValue: d => d.NStamina },
-                                    { name: 'Strength', domain: [0, 100], getValue: d => d.NStrength }
-                                ]}
-                                width={450}
-                                height={400}
-
-                            />}
-
-                                </Col>
-                            </Row>
-                        </CardBody>
-                    </Card>
-
+                <Descriptions title={this.state.selectedRestaurantDetails.name} bordered>
+                  <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails.categories}</Descriptions.Item>
+                  <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails.stars}/></Descriptions.Item>
+                  <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails.review_count}</Descriptions.Item>
+                  <Descriptions.Item label="In Business?">
+                    {this.state.selectedRestaurantDetails.is_open == '1' ? <Badge status="success" text="In Business" /> : <Badge status="error" text="Permanently Closed" />}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Today's Hours">{this.state.selectedRestaurantDetails.Monday}</Descriptions.Item>
+                  <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails.address}, <br/>
+                  {this.state.selectedRestaurantDetails.city}, {this.state.selectedRestaurantDetails.State} {this.state.selectedRestaurantDetails.postal_code}</Descriptions.Item>
+                </Descriptions>
+                <br/>
                 </div> : null}
-
+                <BackTop/>
             </div>
 
         )
