@@ -63,7 +63,12 @@ const getRestaurantSearch = async (name, state, city, zip, category, rating_high
     return res.json()
 }
 
-
+const getRestaurantRecommendation = async (userName, userId, state, city, zip, page, pagesize) => {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/search/restaurants?UserName=${userName}&UserId=${userId}&State=${state}&City=${city}&Zip=${zip}&page=${page}&pagesize=${pagesize}`, {
+        method: 'GET',
+    })
+    return res.json()
+}
 
 
 export {
@@ -75,5 +80,6 @@ export {
     getRestaurant,
     getMatchSearch,
     getPlayerSearch,
-    getRestaurantSearch
+    getRestaurantSearch,
+    getRestaurantRecommendation
 }
