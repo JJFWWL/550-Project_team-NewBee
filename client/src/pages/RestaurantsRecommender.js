@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, FormInput, FormGroup, Button, Card, CardBody, CardTitle, Progress } from "shards-react";
+import { Form, FormInput, FormGroup, Card, CardBody, CardTitle, Progress } from "shards-react";
 
 import {
     Table,
@@ -9,9 +9,19 @@ import {
     Col,
     Divider,
     Slider,
-    Rate
+    Rate,
+    Button,
+    Radio,
+    Menu,
+    Cascader,
+    BackTop,
+    Image,
+    Descriptions,
+    Badge,
+    Carousel,
+    Tabs
 } from 'antd'
-import { StarOutlined, FireOutlined } from '@ant-design/icons';
+import { StarOutlined, FireOutlined, DollarOutlined, DollarCircleFilled } from '@ant-design/icons';
 import { RadarChart } from 'react-vis';
 import { format } from 'd3-format';
 
@@ -19,74 +29,389 @@ import { format } from 'd3-format';
 
 
 import MenuBar from '../components/MenuBar';
-import { getPlayerSearch, getPlayer } from '../fetcher'
+import { getAllRestaurants, getRestaurantSearch, getRestaurant, getRestaurantRecommendation } from '../fetcher'
 const wideFormat = format('.3r');
 
-const playerColumns = [
+const { TabPane } = Tabs;
+
+const datasource1 = [
+  {
+    business_id: '1',
+    name: 'Mike\'s Grill',
+    city: 'Portland',
+    State: 'OR',
+    stars: 3.5,
+    review_count: 10,
+    categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
+    RestaurantsPriceRange2: '2',
+    photo_id:'__0nof27AJTcA_es7-1PCw',
+    is_open: 1,
+    postal_code: '02934',
+    address: '12345 Montreal St.',
+    Monday: '7:00-21:00'
+  },
+  {
+    business_id: '2',
+    name: 'John\'s Sushi',
+    city: 'Boston',
+    State: 'MA',
+    stars: 4,
+    review_count: 100,
+    categories: 'Japanese',
+    RestaurantsPriceRange2: '4',
+    photo_id:'__0nof27AJTcA_es7-1PCw'
+  },
+];
+
+const priceOptions = [
+  {label: '$', value: '1'},
+  {label: '$$', value: '2'},
+  {label: '$$$', value: '3'},
+  {label: '$$$$', value: '4'},
+]
+
+const locationOptions = [
+  {value:'MA',
+    label:'Massachusetts',
+    children: [
+      {value: 'Allston', label:'Allston'},
+      {value: 'Andover', label:'Andover'},
+      {value: 'Arling-n', label:'Arling-n'},
+      {value: 'Arlington', label:'Arlington'},
+      {value: 'Ashland', label:'Ashland'},
+      {value: 'Auburndale', label:'Auburndale'},
+      {value: 'Avon', label:'Avon'},
+      {value: 'Back Bay', label:'Back Bay'},
+      {value: 'Beacon Hill', label:'Beacon Hill'},
+      {value: 'Bedford', label:'Bedford'},
+      {value: 'Belmont', label:'Belmont'},
+      {value: 'Beverly', label:'Beverly'},
+      {value: 'Billerica', label:'Billerica'},
+      {value: 'Boston', label:'Boston'},
+      {value: 'Boston-Fenway', label:'Boston-Fenway'},
+      {value: 'Boston-Winthrop', label:'Boston-Winthrop'},
+      {value: 'BRA', label:'BRA'},
+      {value: 'Braintee', label:'Braintee'},
+      {value: 'Braintree', label:'Braintree'},
+      {value: 'Braintree ', label:'Braintree '},
+      {value: 'Braintree Ma', label:'Braintree Ma'},
+      {value: 'Brighton', label:'Brighton'},
+      {value: 'Brockton', label:'Brockton'},
+      {value: 'Brookline', label:'Brookline'},
+      {value: 'Burlington', label:'Burlington'},
+      {value: 'Cambridge', label:'Cambridge'},
+      {value: 'Canton', label:'Canton'},
+      {value: 'Carlisle', label:'Carlisle'},
+      {value: 'Charlestown', label:'Charlestown'},
+      {value: 'Chelsea', label:'Chelsea'},
+      {value: 'Chestnut Hill', label:'Chestnut Hill'},
+      {value: 'Chestnut Hills', label:'Chestnut Hills'},
+      {value: 'Cohasset', label:'Cohasset'},
+      {value: 'Concord', label:'Concord'},
+      {value: 'Danvers', label:'Danvers'},
+      {value: 'Dedham', label:'Dedham'},
+      {value: 'Dorchester', label:'Dorchester'},
+      {value: 'Dorchester Center', label:'Dorchester Center'},
+      {value: 'Dover', label:'Dover'},
+      {value: 'E Boston', label:'E Boston'},
+      {value: 'E. Boston', label:'E. Boston'},
+      {value: 'EAST  Boston', label:'EAST  Boston'},
+      {value: 'East Boston', label:'East Boston'},
+      {value: 'East Walpole', label:'East Walpole'},
+      {value: 'East Watertown', label:'East Watertown'},
+      {value: 'East Weymouth', label:'East Weymouth'},
+      {value: 'Everett', label:'Everett'},
+      {value: 'Framingham', label:'Framingham'},
+      {value: 'Franklin', label:'Franklin'},
+      {value: 'Greater Boston Area', label:'Greater Boston Area'},
+      {value: 'Hanover', label:'Hanover'},
+      {value: 'Hanscom Air Force Ba', label:'Hanscom Air Force Ba'},
+      {value: 'Hingham', label:'Hingham'},
+      {value: 'HOLB', label:'HOLB'},
+      {value: 'Holbrook', label:'Holbrook'},
+      {value: 'Hollbrook', label:'Hollbrook'},
+      {value: 'Hull', label:'Hull'},
+      {value: 'Hyde Park', label:'Hyde Park'},
+      {value: 'Jamaica  Plain', label:'Jamaica  Plain'},
+      {value: 'Jamaica Plain', label:'Jamaica Plain'},
+      {value: 'Jeffries Point / Air', label:'Jeffries Point / Air'},
+      {value: 'Lexington', label:'Lexington'},
+      {value: 'Lincoln', label:'Lincoln'},
+      {value: 'Lower Mills', label:'Lower Mills'},
+      {value: 'Lynn', label:'Lynn'},
+      {value: 'Lynnfield', label:'Lynnfield'},
+      {value: 'Malden', label:'Malden'},
+      {value: 'Marblehead', label:'Marblehead'},
+      {value: 'Marlbehead', label:'Marlbehead'},
+      {value: 'Marlborough', label:'Marlborough'},
+      {value: 'Marshfield', label:'Marshfield'},
+      {value: 'Mattapan', label:'Mattapan'},
+      {value: 'Maynard', label:'Maynard'},
+      {value: 'Medfield', label:'Medfield'},
+      {value: 'Medford', label:'Medford'},
+      {value: 'Melrose', label:'Melrose'},
+      {value: 'Mid-Cambridge', label:'Mid-Cambridge'},
+      {value: 'Middleton', label:'Middleton'},
+      {value: 'Milton', label:'Milton'},
+      {value: 'Mission Hill', label:'Mission Hill'},
+      {value: 'N Billerica', label:'N Billerica'},
+      {value: 'N. Billerica', label:'N. Billerica'},
+      {value: 'N. Weymouth', label:'N. Weymouth'},
+      {value: 'N.Billerica', label:'N.Billerica'},
+      {value: 'N.Reading', label:'N.Reading'},
+      {value: 'Nahant', label:'Nahant'},
+      {value: 'Natick', label:'Natick'},
+      {value: 'Needham', label:'Needham'},
+      {value: 'Needham Heights', label:'Needham Heights'},
+      {value: 'Newburyport', label:'Newburyport'},
+      {value: 'Newton', label:'Newton'},
+      {value: 'Newton Center', label:'Newton Center'},
+      {value: 'Newton Centre', label:'Newton Centre'},
+      {value: 'Newton Corner', label:'Newton Corner'},
+      {value: 'Newton Highlands', label:'Newton Highlands'},
+      {value: 'Newton L F', label:'Newton L F'},
+      {value: 'Newton Lower Falls', label:'Newton Lower Falls'},
+      {value: 'Newton MA', label:'Newton MA'},
+      {value: 'Newton U F', label:'Newton U F'},
+      {value: 'Newton Upper Falls', label:'Newton Upper Falls'},
+      {value: 'Newtonville', label:'Newtonville'},
+      {value: 'North Andover', label:'North Andover'},
+      {value: 'North Beverly', label:'North Beverly'},
+      {value: 'North Billerica', label:'North Billerica'},
+      {value: 'North Cambridge', label:'North Cambridge'},
+      {value: 'North Quincy', label:'North Quincy'},
+      {value: 'North Reading', label:'North Reading'},
+      {value: 'North Scituate Villa', label:'North Scituate Villa'},
+      {value: 'North Weymouth', label:'North Weymouth'},
+      {value: 'Norwell', label:'Norwell'},
+      {value: 'Norwood', label:'Norwood'},
+      {value: 'Norwood Center', label:'Norwood Center'},
+      {value: 'Peabody', label:'Peabody'},
+      {value: 'Pinehurst', label:'Pinehurst'},
+      {value: 'Quincy', label:'Quincy'},
+      {value: 'Quincy Center', label:'Quincy Center'},
+      {value: 'Randolph', label:'Randolph'},
+      {value: 'Reading', label:'Reading'},
+      {value: 'Revere', label:'Revere'},
+      {value: 'Rockland', label:'Rockland'},
+      {value: 'Rockport', label:'Rockport'},
+      {value: 'Roslindale', label:'Roslindale'},
+      {value: 'Roxbury', label:'Roxbury'},
+      {value: 'Roxbury Crossing', label:'Roxbury Crossing'},
+      {value: 'S. Boston', label:'S. Boston'},
+      {value: 'Salem', label:'Salem'},
+      {value: 'Saugus', label:'Saugus'},
+      {value: 'Sharon', label:'Sharon'},
+      {value: 'Sherborn', label:'Sherborn'},
+      {value: 'So. Weymouth', label:'So. Weymouth'},
+      {value: 'Somerville', label:'Somerville'},
+      {value: 'Sommerville', label:'Sommerville'},
+      {value: 'South Boston', label:'South Boston'},
+      {value: 'South Brookline', label:'South Brookline'},
+      {value: 'South End', label:'South End'},
+      {value: 'South Natick', label:'South Natick'},
+      {value: 'South Waltham', label:'South Waltham'},
+      {value: 'South Weymouth', label:'South Weymouth'},
+      {value: 'Stoneham', label:'Stoneham'},
+      {value: 'Stoughton', label:'Stoughton'},
+      {value: 'Stoughton MA', label:'Stoughton MA'},
+      {value: 'Sudbury', label:'Sudbury'},
+      {value: 'Swampscott', label:'Swampscott'},
+      {value: 'Tewksbury', label:'Tewksbury'},
+      {value: 'Tewskbury', label:'Tewskbury'},
+      {value: 'W. Roxbury', label:'W. Roxbury'},
+      {value: 'Waban', label:'Waban'},
+      {value: 'Wakefield', label:'Wakefield'},
+      {value: 'Wakefield Ma', label:'Wakefield Ma'},
+      {value: 'Wakefield, Massachus', label:'Wakefield, Massachus'},
+      {value: 'Walpole', label:'Walpole'},
+      {value: 'Waltham', label:'Waltham'},
+      {value: 'Watertown', label:'Watertown'},
+      {value: 'Watertown,', label:'Watertown,'},
+      {value: 'Wayland', label:'Wayland'},
+      {value: 'Wellesley', label:'Wellesley'},
+      {value: 'Wellesley Hills', label:'Wellesley Hills'},
+      {value: 'Wellesley,', label:'Wellesley,'},
+      {value: 'Wenham', label:'Wenham'},
+      {value: 'West Concord', label:'West Concord'},
+      {value: 'West Medford', label:'West Medford'},
+      {value: 'West Newton', label:'West Newton'},
+      {value: 'West Peabody', label:'West Peabody'},
+      {value: 'West Roxbury', label:'West Roxbury'},
+      {value: 'West Roxury', label:'West Roxury'},
+      {value: 'Westford', label:'Westford'},
+      {value: 'Weston', label:'Weston'},
+      {value: 'Westwood', label:'Westwood'},
+      {value: 'Weymouth', label:'Weymouth'},
+      {value: 'Wilmington', label:'Wilmington'},
+      {value: 'Winchester', label:'Winchester'},
+      {value: 'Winthrop', label:'Winthrop'},
+      {value: 'Woburn', label:'Woburn'},
+      {value: 'Wollaston', label:'Wollaston'},
+  ]},
+  {value: 'OR',
+    label: 'Oregon',
+    children: [
+      {value: 'Aloha', label: 'Aloha'},
+      {value:'Beavercreek', label:'Beavercreek'},
+      {value:'Beaverton', label:'Beaverton'},
+      {value:'Beaverton (Portland)', label:'Beaverton (Portland)'},
+      {value:'beaverton Or', label:'beaverton Or'},
+      {value:'Beaverton-Aloha', label:'Beaverton-Aloha'},
+      {value:'Bend', label:'Bend'},
+      {value:'Boring', label:'Boring'},
+      {value:'Clackamas', label:'Clackamas'},
+      {value:'Damascus', label:'Damascus'},
+      {value:'Delta Park', label:'Delta Park'},
+      {value:'Durham', label:'Durham'},
+      {value:'Fairview', label:'Fairview'},
+      {value:'Gladstone', label:'Gladstone'},
+      {value:'Gresham', label:'Gresham'},
+      {value:'Happy Valley', label:'Happy Valley'},
+      {value:'Hillsbor', label:'Hillsbor'},
+      {value:'Hillsboro', label:'Hillsboro'},
+      {value:'Historic Milwaukie', label:'Historic Milwaukie'},
+      {value:'King City', label:'King City'},
+      {value:'Lake Grove', label:'Lake Grove'},
+      {value:'Lake Oswego', label:'Lake Oswego'},
+      {value:'Lake Oswego, OR', label:'Lake Oswego, OR'},
+      {value:'Lake Owego', label:'Lake Owego'},
+      {value:'Marylhurst', label:'Marylhurst'},
+      {value:'Milwauke', label:'Milwauke'},
+      {value:'Milwaukee', label:'Milwaukee'},
+      {value:'Milwaukie', label:'Milwaukie'},
+      {value:'Oak Grove', label:'Oak Grove'},
+      {value:'OR', label:'OR'},
+      {value:'Oregon City', label:'Oregon City'},
+      {value:'Portand', label:'Portand'},
+      {value:'Portland', label:'Portland'},
+      {value:'Portland Oregon', label:'Portland Oregon'},
+      {value:'Portland-Eastport Pl', label:'Portland-Eastport Pl'},
+      {value:'Portland-Gateway Pla', label:'Portland-Gateway Pla'},
+      {value:'Prontland', label:'Prontland'},
+      {value:'San dy', label:'San dy'},
+      {value:'Sellwood', label:'Sellwood'},
+      {value:'Sherwood', label:'Sherwood'},
+      {value:'St Johns', label:'St Johns'},
+      {value:'Tigard', label:'Tigard'},
+      {value:'Tigard (Portland)', label:'Tigard (Portland)'},
+      {value:'Troutland', label:'Troutland'},
+      {value:'Tualatin', label:'Tualatin'},
+      {value:'Vancouver', label:'Vancouver'},
+      {value:'West Linn', label:'West Linn'},
+      {value:'Wilsonville', label:'Wilsonville'},
+    ]},
+
+]
+
+const restaurantColumns = [
     {
         title: 'Name',
-        dataIndex: 'Name',
-        key: 'Name',
-        sorter: (a, b) => a.Name.localeCompare(b.Name),
-        render: (text, row) => <a href={`/players?id=${row.PlayerId}`}>{text}</a>
+        dataIndex: 'name',
+        key: 'name',
+        sorter: (a, b) => a.name.localeCompare(b.name),
+        render: (text, row) => <a href={`/restaurants?id=${row.business_id}`}>{text}</a>
     },
     {
-        title: 'Nationality',
-        dataIndex: 'Nationality',
-        key: 'Nationality',
-        sorter: (a, b) => a.Nationality.localeCompare(b.Nationality)
+        title: 'City',
+        dataIndex: 'city',
+        key: 'city',
+        sorter: (a, b) => a.city.localeCompare(b.city)
     },
     {
-        title: 'Rating',
-        dataIndex: 'Rating',
-        key: 'Rating',
-        sorter: (a, b) => a.Rating - b.Rating
-
+        title: 'State',
+        dataIndex: 'State',
+        key: 'State',
+        filters: [
+          {text: 'MA', value: 'MA'},
+          {text: 'OR', value: 'OR'}
+        ],
+        onFilter: (value, record) => record.State === value,
     },
     // TASK 19: copy over your answers for tasks 7 - 9 to add columns for potential, club, and value
     {
-        title:"Potential",
-        dataIndex:"Potential",
-        key:"Potential",
-        sorter: (a, b) => a.Potential - b.Potential
+        title:"Stars",
+        dataIndex:"stars",
+        key:"stars",
+        sorter: (a, b) => a.stars - b.stars
     },
     {
-        title:"Club",
-        dataIndex:"Club",
-        key:"Club",
-        sorter: (a, b) => a.Club.localeCompare(b.Club)
+        title:"Review Count",
+        dataIndex:"review_count",
+        key:"review_count",
+        sorter: (a, b) => a.review_count - b.review_count
     },
     {
-        title:"Value",
-        dataIndex:"Value",
-        key:"Value"
+        title:"Categories",
+        dataIndex:"categories",
+        key:"categories"
+    },
+    {
+        title:"Price Level",
+        dataIndex:"RestaurantsPriceRange2",
+        key:"RestaurantsPriceRange2"
     }
 ];
 
+const contentStyle = {
+
+  color: '#fff',
+  lineHeight: '160px',
+  textAlign: 'center',
+
+};
 
 class RestaurantsRecommender extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            restaurantQuery: '',
-            locationQuery: '',
+            nameQuery: '',
+            stateQuery: '',
+            cityQuery: '',
+            zipQuery: '',
             categoryQuery: '',
             ratingHighQuery: 5,
             ratingLowQuery: 1,
-            reviewHighQuery: 200,
-            reviewLowQuery: 0,
-            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : 229594,
-            selectedRestaurantDetails: null,
-            playersResults: []
+            priceQuery: '',
+            userNameQuery: '',
+            userIdQuery: '',
+            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '__CskSr6YIhxxZYt9445Fg',
+            selectedRestaurantDetails: {
+              business_id: '1',
+              name: 'Mike\'s Grill',
+              city: 'Portland',
+              State: 'OR',
+              stars: 3.5,
+              review_count: 10,
+              categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
+              RestaurantsPriceRange2: '2',
+              photo_id:'__0nof27AJTcA_es7-1PCw',
+              is_open: 1,
+              postal_code: '02934',
+              address: '12345 Montreal St.',
+              Monday: '7:00-21:00',
+              Tuesday:'5:00-20:00',
+              Saturday: '12:00-23:00',
+              Sunday:'16:00-21:00'
+            },
+            restaurantsResults: []
 
         }
 
+
         this.updateSearchResults = this.updateSearchResults.bind(this)
+        this.resetQueries = this.resetQueries.bind(this)
         this.handleNameQueryChange = this.handleNameQueryChange.bind(this)
-        this.handleNationalityQueryChange = this.handleNationalityQueryChange.bind(this)
-        this.handleClubQueryChange = this.handleClubQueryChange.bind(this)
+        this.handleLocationQueryChange = this.handleLocationQueryChange.bind(this)
+        this.handleZipQueryChange = this.handleZipQueryChange.bind(this)
+        this.handleCategoryQueryChange = this.handleCategoryQueryChange.bind(this)
         this.handleRatingChange = this.handleRatingChange.bind(this)
-        this.handlePotentialChange = this.handlePotentialChange.bind(this)
+        this.handlePriceChange = this.handlePriceChange.bind(this)
+
+        this.handleUserNameQueryChange = this.handleUserNameQueryChange.bind(this)
+        this.handleUserIdQueryChange = this.handleUserIdQueryChange.bind(this)
+        this.updateRecommendResults = this.updateRecommendResults.bind(this)
+
     }
 
 
@@ -95,14 +420,17 @@ class RestaurantsRecommender extends React.Component {
         this.setState({ nameQuery: event.target.value })
     }
 
-    handleClubQueryChange(event) {
-        // TASK 20: update state variables appropriately. See handleNameQueryChange(event) for reference
-        this.setState({clubQuery:event.target.value})
+    handleLocationQueryChange(value, selectedLocations) {
+        this.setState({stateQuery: selectedLocations.map(o => o.label)[0] == 'Massachusetts'? 'MA':'OR',
+                        cityQuery: selectedLocations.map(o => o.label)[1]})
     }
 
-    handleNationalityQueryChange(event) {
-        // TASK 21: update state variables appropriately. See handleNameQueryChange(event) for reference
-        this.setState({nationalityQuery:event.target.value})
+    handleZipQueryChange(event) {
+        this.setState({zipQuery:event.target.value})
+    }
+
+    handleCategoryQueryChange(event) {
+        this.setState({categoryQuery:event.target.value})
     }
 
     handleRatingChange(value) {
@@ -110,31 +438,55 @@ class RestaurantsRecommender extends React.Component {
         this.setState({ ratingHighQuery: value[1] })
     }
 
-    handlePotentialChange(value) {
-        // TASK 22: parse value and update state variables appropriately. See handleRatingChange(value) for reference
-        this.setState({potLowQuery: value[0]})
-        this.setState({potHighQuery: value[1]})
+    handlePriceChange(event) {
+        this.setState({priceQuery: event.target.value})
     }
 
-
-
     updateSearchResults() {
+        getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
+            this.setState({restaurantsResults:res.results})
+        })
+    }
 
-        //TASK 23: call getPlayerSearch and update playerResults in state. See componentDidMount() for a hint
-        getPlayerSearch(this.state.nameQuery, this.state.nationalityQuery, this.state.clubQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.potHighQuery, this.state.potLowQuery, null, null).then(res => {
-            this.setState({playersResults:res.results})
+    resetQueries() {
+      this.setState({ nameQuery: '' })
+      this.setState({ stateQuery: '' })
+      this.setState({ cityQuery: '' })
+      this.setState({ zipQuery: '' })
+      this.setState({ categoryQuery: '' })
+      this.setState({ ratingHighQuery: 5 })
+      this.setState({ ratingLowQuery: 1 })
+      this.setState({ priceQuery: '' })
+    }
+
+    handleUserNameQueryChange(event) {
+        this.setState({ userNameQuery: event.target.value })
+    }
+
+    handleUserIdQueryChange(event) {
+        this.setState({ userIdQuery: event.target.value })
+    }
+
+    updateRecommendResults() {
+        getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
+            this.setState({restaurantsResults:res.results})
         })
     }
 
     componentDidMount() {
-        getPlayerSearch(this.state.nameQuery, this.state.nationalityQuery, this.state.clubQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.potHighQuery, this.state.potLowQuery, null, null).then(res => {
-            this.setState({ playersResults: res.results })
+      getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
+          this.setState({restaurantsResults:res.results})
+      })
+
+        // TASK 25: call getRestaurant with the appropriate parameter and set update the correct state variable.
+        // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
+        getRestaurant(this.state.selectedRestaurantId).then(res => {
+
+            this.setState({selectedRestaurantDetails: res.results[0]})
         })
 
-        // TASK 25: call getPlayer with the appropriate parameter and set update the correct state variable.
-        // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
-        getPlayer(this.state.selectedPlayerId).then(res => {
-            this.setState({selectedPlayerDetails: res.results[0]})
+        getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
+            this.setState({restaurantsResults:res.results})
         })
     }
 
@@ -144,181 +496,142 @@ class RestaurantsRecommender extends React.Component {
             <div>
 
                 <MenuBar />
+
+                <Tabs defaultActiveKey="1" centered size="large" >
+                <TabPane tab="Search" key="1">
+
                 <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
                     <Row>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '25vw', margin: '0 auto' }}>
                             <label>Restaurant</label>
-                            <FormInput placeholder="Bradley's Bar & Grill" value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
+                            <FormInput placeholder={this.state.nameQuery? this.state.nameQuery : 'e.g. Bradley\'s Bar & Grill'} value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
                         </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
                             <label>Location</label>
-                            <FormInput placeholder="Portland, OR" value={this.state.nationalityQuery} onChange={this.handleNationalityQueryChange} />
+                            <br/>
+                            <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
+                            <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
+                            <a href="#">Change city</a>
+                            </Cascader>
                         </FormGroup></Col>
-                        {/* TASK 26: Create a column for Club, using the elements and style we followed in the above two columns. Use the onChange method (handleClubQueryChange)  */}
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '10vw', margin: '0 auto' }}>
+                            <label>Zip</label>
+                            <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
+                        </FormGroup></Col>
+                        <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
                             <label>Category</label>
-                            <FormInput placeholder="American" value={this.state.ClubQuery} onChange={this.handleClubQueryChange} />
+                            <FormInput placeholder={this.state.categoryQuery? this.state.categoryQuery : 'e.g. American'} value={this.state.categoryQuery} onChange={this.handleCategoryQueryChange} />
                         </FormGroup></Col>
 
                     </Row>
                     <br></br>
                     <Row>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
                             <label>Stars</label>
-                            <Slider range defaultValue={[3, 5]} max={5} min={1} onChange={this.handleRatingChange} />
-
+                            <Slider range value={[this.state.ratingLowQuery,this.state.ratingHighQuery]} max={5} min={1} step={0.5} onChange={this.handleRatingChange}/>
                         </FormGroup></Col>
-                        {/* TASK 27: Create a column with a label and slider in a FormGroup item for filtering by Potential. See the column above for reference and use the onChange method (handlePotentialChange)  */}
                         <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
-                            <label>Review Count</label>
-                            <Slider range defaultValue={[20, 100]} max={200} min={0} onChange={this.handlePotentialChange} />
+                            <label>Price Level</label>
+                            <Radio.Group options={priceOptions} value={this.state.priceQuery} onChange={this.handlePriceChange} optionType="button"/>
+                        </FormGroup></Col>
+                        <Col flex={2}>
+                            <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.updateSearchResults}>Search</Button>
+                            &nbsp;
+                            <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
+                        </Col>
 
-                        </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '10vw' }}>
-                            <Button style={{ marginTop: '4vh' }} onClick={this.updateSearchResults}>Search</Button>
-                        </FormGroup></Col>
 
                     </Row>
 
 
                 </Form>
+
+              </TabPane>
+              <TabPane tab="Recommend" key="2">
+              <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
+                  <Row>
+                      <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
+                          <label>Your name</label>
+                          <FormInput placeholder={this.state.userNameQuery? this.state.userNameQuery : 'e.g. John'} value={this.state.userNameQuery} onChange={this.handleUserNameQueryChange} />
+                      </FormGroup></Col>
+                      <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
+                          <label>Last 6 digit of your user ID</label>
+                          <FormInput placeholder={this.state.userIdQuery? this.state.userIdQuery : 'e.g. OiezZw'} value={this.state.userIdQuery} onChange={this.handleUserIdQueryChange} />
+                      </FormGroup></Col>
+                      <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
+                          <label>Location</label>
+                          <br/>
+                          <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
+                          <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
+                          <a href="#">Change city</a>
+                          </Cascader>
+                      </FormGroup></Col>
+                      <Col flex={2}><FormGroup style={{ width: '10vw', margin: '0 auto' }}>
+                          <label>Zip</label>
+                          <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
+                      </FormGroup></Col>
+                      <Col flex={2}>
+                          <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.updateRecommendResults}>Recommend</Button>
+                          &nbsp;
+                          <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
+                      </Col>
+                  </Row>
+              </Form>
+              </TabPane>
+                </Tabs>
                 <Divider />
                 {/* TASK 24: Copy in the players table from the Home page, but use the following style tag: style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }} - this should be one line of code! */}
                     <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                    <h3>Restaurants</h3>
-                    <Table dataSource={this.state.playersResults} columns={playerColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
+                    <h3>Restaurants{this.state.selectedRestaurantId}</h3>
+
+                    <Table dataSource={datasource1/*this.state.restaurantsResults*/} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
+                    <BackTop />
                     </div>
                 <Divider />
 
-                {this.state.selectedPlayerDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                    <Card>
+                {this.state.selectedRestaurantDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
+                <Carousel autoplay /*afterChange={onChange}*/>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                </Carousel>
 
-                        <CardBody>
-                        <Row gutter='30' align='middle' justify='center'>
-                            <Col flex={2} style={{ textAlign: 'left' }}>
-                            <h3>{this.state.selectedPlayerDetails.Name}</h3>
-
-                            </Col>
-
-                            <Col flex={2} style={{ textAlign: 'right' }}>
-                            <img src={this.state.selectedPlayerDetails.Photo} referrerpolicy="no-referrer" alt={null} style={{height:'15vh'}}/>
-
-                            </Col>
-                        </Row>
-                            <Row gutter='30' align='middle' justify='left'>
-                                <Col>
-                                <h5>{this.state.selectedPlayerDetails.Club}</h5>
-                                </Col>
-                                <Col>
-                                <h5>{this.state.selectedPlayerDetails.JerseyNumber}</h5>
-                                </Col>
-                                <Col>
-                                <h5>{this.state.selectedPlayerDetails.BestPosition}</h5>
-                                </Col>
-                            </Row>
-                            <br>
-                            </br>
-                            <Row gutter='30' align='middle' justify='left'>
-                                <Col>
-                                Age: {this.state.selectedPlayerDetails.Age}
-                                </Col>
-                                {/* TASK 28: add two more columns here for Height and Weight, with the appropriate labels as above */}
-                                <Col>
-                                Height: {this.state.selectedPlayerDetails.Height}
-                                </Col>
-                                <Col>
-                                Weight: {this.state.selectedPlayerDetails.Weight}
-                                </Col>
-                                <Col flex={2} style={{ textAlign: 'right' }}>
-                                {this.state.selectedPlayerDetails.Nationality}
-                                    <img src={this.state.selectedPlayerDetails.Flag} referrerpolicy="no-referrer" alt={null} style={{height:'3vh', marginLeft: '1vw'}}/>
-                                </Col>
-
-                            </Row>
-                            <Row gutter='30' align='middle' justify='left'>
-                                <Col>
-                                Value: {this.state.selectedPlayerDetails.Value}
-                                </Col>
-                                <Col>
-                                Release Clause: {this.state.selectedPlayerDetails.ReleaseClause}
-                                </Col>
-                                {/* TASK 29: Create 2 additional columns for the attributes 'Wage' and 'Contract Valid Until' (use spaces between the words when labelling!) */}
-                                <Col>
-                                Wage: {this.state.selectedPlayerDetails.Wage}
-                                </Col>
-                                <Col>
-                                Contract Valid Until: {this.state.selectedPlayerDetails.ContractValidUntil}
-                                </Col>
-                            </Row>
-                        </CardBody>
-
-                    </Card>
-
-                    <Card style={{marginTop: '2vh'}}>
-                        <CardBody>
-                            <Row gutter='30' align='middle' justify='center'>
-                            <Col flex={2} style={{ textAlign: 'left' }}>
-                            <h6>Skill</h6>
-                            <Rate disabled defaultValue={this.state.selectedPlayerDetails.Skill} />
-                            <h6>Reputation</h6>
-                            {/* TASK 30: create a star rating component for 'InternationalReputation'. Make sure you use the 'disabled' option as above to ensure it is read-only*/}
-                            <Rate disabled defaultValue={this.state.selectedPlayerDetails.InternationalReputation} />
-                            <h6>International Reputation</h6>
-                            <Divider/>
-                            <h6>Best Rating</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedPlayerDetails.BestOverallRating} >{this.state.selectedPlayerDetails.BestOverallRating}</Progress>
-                                {/* TASK 31: create the headings and progress bars for 'Potential' and 'Rating'. Use the same style as the one above for 'Best Rating'.*/}
-                                <h6>Potential</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedPlayerDetails.Potential} >{this.state.selectedPlayerDetails.Potential}</Progress>
-                                <h6>Rating</h6>
-                                <Progress style={{ width: '20vw'}} value={this.state.selectedPlayerDetails.Rating} >{this.state.selectedPlayerDetails.Rating}</Progress>
-                                </Col >
-                                <Col  push={2} flex={2}>
-                                {/*TASK 32: In case the player is a GK, show a radar chart (replacing 'null' below) with the labels: Agility, Ball Control, Passing, Positioning, Stamina, Strength */}
-
-                                    {this.state.selectedPlayerDetails.BestPosition === 'GK'?
-                                    <RadarChart
-                                data={[this.state.selectedPlayerDetails]}
-                                tickFormat={t => wideFormat(t)}
-                                startingAngle={0}
-                                domains={[
-                                    { name: 'Penalties', domain: [0, 100], getValue: d => d.GKPenalties },
-                                    { name: 'Diving', domain: [0, 100], getValue: d => d.GKDiving },
-                                    { name: 'Handling', domain: [0, 100], getValue: d => d.GKHandling },
-                                    { name: 'Kicking', domain: [0, 100], getValue: d => d.GKKicking },
-                                    { name: 'Positioning', domain: [0, 100], getValue: d => d.GKPositioning },
-                                    { name: 'Reflexes', domain: [0, 100], getValue: d => d.GKReflexes }
-                                ]}
-                                width={450}
-                                height={400}
-
-                            />
-                                    :<RadarChart
-                                data={[this.state.selectedPlayerDetails]}
-                                tickFormat={t => wideFormat(t)}
-                                startingAngle={0}
-                                domains={[
-                                    { name: 'Agility', domain: [0, 100], getValue: d => d.NAdjustedAgility },
-                                    { name: 'Ball Control', domain: [0, 100], getValue: d => d.NBallControl },
-                                    { name: 'Passing', domain: [0, 100], getValue: d => d.NPassing },
-                                    { name: 'Positioning', domain: [0, 100], getValue: d => d.NPositioning },
-                                    { name: 'Stamina', domain: [0, 100], getValue: d => d.NStamina },
-                                    { name: 'Strength', domain: [0, 100], getValue: d => d.NStrength }
-                                ]}
-                                width={450}
-                                height={400}
-
-                            />}
-
-                                </Col>
-                            </Row>
-                        </CardBody>
-                    </Card>
-
+                <Descriptions title={this.state.selectedRestaurantDetails.name} bordered layout='horizontal'>
+                  <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails.categories}</Descriptions.Item>
+                  <Descriptions.Item label="Price"><Rate character="$" count={4} disabled value={this.state.selectedRestaurantDetails.RestaurantsPriceRange2}/></Descriptions.Item>
+                  <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails.stars}/></Descriptions.Item>
+                  <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails.review_count}</Descriptions.Item>
+                  <Descriptions.Item label="In Business?">
+                    {this.state.selectedRestaurantDetails.is_open == '1' ? <Badge status="success" text="In Business" /> : <Badge status="error" text="Permanently Closed" />}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Today's Hours">
+                  {new Date().getDay() == 1? this.state.selectedRestaurantDetails.Monday:''}
+                  {new Date().getDay() == 2? this.state.selectedRestaurantDetails.Tuesday:''}
+                  {new Date().getDay() == 3? this.state.selectedRestaurantDetails.Wednesday:''}
+                  {new Date().getDay() == 4? this.state.selectedRestaurantDetails.Thursday:''}
+                  {new Date().getDay() == 5? this.state.selectedRestaurantDetails.Friday:''}
+                  {new Date().getDay() == 6? this.state.selectedRestaurantDetails.Saturday:''}
+                  {new Date().getDay() == 7? this.state.selectedRestaurantDetails.Sunday:''}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails.address}, <br/>
+                  {this.state.selectedRestaurantDetails.city}, {this.state.selectedRestaurantDetails.State} {this.state.selectedRestaurantDetails.postal_code}</Descriptions.Item>
+                </Descriptions>
+                <br/>
                 </div> : null}
-
+                <BackTop/>
             </div>
+
         )
+
     }
 }
 
