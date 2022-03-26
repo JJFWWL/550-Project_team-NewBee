@@ -25,9 +25,6 @@ import { StarOutlined, FireOutlined, DollarOutlined, DollarCircleFilled } from '
 import { RadarChart } from 'react-vis';
 import { format } from 'd3-format';
 
-
-
-
 import MenuBar from '../components/MenuBar';
 import { getAllRestaurants, getRestaurantSearch, getRestaurant, getRestaurantRecommendation } from '../fetcher'
 const wideFormat = format('.3r');
@@ -60,6 +57,21 @@ const datasource1 = [
     categories: 'Japanese',
     RestaurantsPriceRange2: '4',
     photo_id:'__0nof27AJTcA_es7-1PCw'
+  },
+  {
+    business_id: '3',
+    name: 'Peter\'s Bar',
+    city: 'Cambridge',
+    State: 'MA',
+    stars: 4.5,
+    review_count: 100,
+    categories: 'Bars, Nightlife',
+    RestaurantsPriceRange2: '1',
+    photo_id:'__0nof27AJTcA_es7-1PCw',
+    is_open: 1,
+    postal_code: '02452',
+    address: '12345 Montreal St.',
+    Monday: '7:00-21:00'
   },
 ];
 
@@ -375,7 +387,7 @@ class RestaurantsRecommender extends React.Component {
             priceQuery: '',
             userNameQuery: '',
             userIdQuery: '',
-            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '__CskSr6YIhxxZYt9445Fg',
+            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '',
             selectedRestaurantDetails: {
               business_id: '1',
               name: 'Mike\'s Grill',
@@ -530,7 +542,7 @@ class RestaurantsRecommender extends React.Component {
                             <label>Stars</label>
                             <Slider range value={[this.state.ratingLowQuery,this.state.ratingHighQuery]} max={5} min={1} step={0.5} onChange={this.handleRatingChange}/>
                         </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                        <Col flex={2}><FormGroup style={{ width: '18vw', margin: '0 auto' }}>
                             <label>Price Level</label>
                             <Radio.Group options={priceOptions} value={this.state.priceQuery} onChange={this.handlePriceChange} optionType="button"/>
                         </FormGroup></Col>
@@ -585,25 +597,12 @@ class RestaurantsRecommender extends React.Component {
                     <h3>Restaurants{this.state.selectedRestaurantId}</h3>
 
                     <Table dataSource={datasource1/*this.state.restaurantsResults*/} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
-                    <BackTop />
                     </div>
+
                 <Divider />
 
                 {this.state.selectedRestaurantDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                <Carousel autoplay /*afterChange={onChange}*/>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                </Carousel>
+
 
                 <Descriptions title={this.state.selectedRestaurantDetails.name} bordered layout='horizontal'>
                   <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails.categories}</Descriptions.Item>
@@ -625,9 +624,25 @@ class RestaurantsRecommender extends React.Component {
                   <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails.address}, <br/>
                   {this.state.selectedRestaurantDetails.city}, {this.state.selectedRestaurantDetails.State} {this.state.selectedRestaurantDetails.postal_code}</Descriptions.Item>
                 </Descriptions>
+
                 <br/>
-                </div> : null}
-                <BackTop/>
+                <Carousel autoplay /*afterChange={onChange}*/>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                </Carousel>
+              </div> : null}
+              <p style={{textAlign: 'center'}}>CIS550 Project ©2022 Created by Team NewBee</p>
+              <BackTop/>
             </div>
 
         )
