@@ -19,14 +19,11 @@ import {
     Descriptions,
     Badge,
     Carousel,
-    Tabs
+    Tabs,
+    notification,
 } from 'antd'
-import { StarOutlined, FireOutlined, DollarOutlined, DollarCircleFilled } from '@ant-design/icons';
-import { RadarChart } from 'react-vis';
+import { StarOutlined, DollarOutlined, DollarCircleFilled } from '@ant-design/icons';
 import { format } from 'd3-format';
-
-
-
 
 import MenuBar from '../components/MenuBar';
 import { getAllRestaurants, getRestaurantSearch, getRestaurant, getRestaurantRecommendation } from '../fetcher'
@@ -60,6 +57,21 @@ const datasource1 = [
     categories: 'Japanese',
     RestaurantsPriceRange2: '4',
     photo_id:'__0nof27AJTcA_es7-1PCw'
+  },
+  {
+    business_id: '3',
+    name: 'Peter\'s Bar',
+    city: 'Cambridge',
+    State: 'MA',
+    stars: 4.5,
+    review_count: 100,
+    categories: 'Bars, Nightlife',
+    RestaurantsPriceRange2: '1',
+    photo_id:'__0nof27AJTcA_es7-1PCw',
+    is_open: 1,
+    postal_code: '02452',
+    address: '12345 Montreal St.',
+    Monday: '7:00-21:00'
   },
 ];
 
@@ -375,7 +387,7 @@ class RestaurantsRecommender extends React.Component {
             priceQuery: '',
             userNameQuery: '',
             userIdQuery: '',
-            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '__CskSr6YIhxxZYt9445Fg',
+            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '',
             selectedRestaurantDetails: {
               business_id: '1',
               name: 'Mike\'s Grill',
@@ -498,112 +510,91 @@ class RestaurantsRecommender extends React.Component {
                 <MenuBar />
 
                 <Tabs defaultActiveKey="1" centered size="large" >
-                <TabPane tab="Search" key="1">
 
-                <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
-                    <Row>
-                        <Col flex={2}><FormGroup style={{ width: '25vw', margin: '0 auto' }}>
-                            <label>Restaurant</label>
-                            <FormInput placeholder={this.state.nameQuery? this.state.nameQuery : 'e.g. Bradley\'s Bar & Grill'} value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
-                        </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
-                            <label>Location</label>
+                    <TabPane tab="Search" key="1">
+                        <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
+                            <Row>
+                                <Col flex={2}><FormGroup style={{ width: '25vw', margin: '0 auto' }}>
+                                    <label>Restaurant</label>
+                                    <FormInput placeholder={this.state.nameQuery? this.state.nameQuery : 'e.g. Bradley\'s Bar & Grill'} value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
+                                </FormGroup></Col>
+                                <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
+                                    <label>Location</label>
+                                    <br/>
+                                    <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
+                                    <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
+                                    <a href="#">Change city</a>
+                                    </Cascader>
+                                </FormGroup></Col>
+                                <Col flex={2}><FormGroup style={{ width: '10vw', margin: '0 auto' }}>
+                                    <label>Zip</label>
+                                    <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
+                                </FormGroup></Col>
+                                <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
+                                    <label>Category</label>
+                                    <FormInput placeholder={this.state.categoryQuery? this.state.categoryQuery : 'e.g. American'} value={this.state.categoryQuery} onChange={this.handleCategoryQueryChange} />
+                                </FormGroup></Col>
+
+                            </Row>
                             <br/>
-                            <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
-                            <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
-                            <a href="#">Change city</a>
-                            </Cascader>
-                        </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '10vw', margin: '0 auto' }}>
-                            <label>Zip</label>
-                            <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
-                        </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
-                            <label>Category</label>
-                            <FormInput placeholder={this.state.categoryQuery? this.state.categoryQuery : 'e.g. American'} value={this.state.categoryQuery} onChange={this.handleCategoryQueryChange} />
-                        </FormGroup></Col>
+                            <Row>
+                                <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
+                                    <label>Stars</label>
+                                    <Slider range value={[this.state.ratingLowQuery,this.state.ratingHighQuery]} max={5} min={1} step={0.5} onChange={this.handleRatingChange}/>
+                                </FormGroup></Col>
+                                <Col flex={2}><FormGroup style={{ width: '18vw', margin: '0 auto' }}>
+                                    <label>Price Level</label>
+                                    <Radio.Group options={priceOptions} value={this.state.priceQuery} onChange={this.handlePriceChange} optionType="button"/>
+                                </FormGroup></Col>
+                                <Col flex={2}>
+                                    <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery ? this.updateSearchResults : ()=>notification.error({message: 'Please select the location!'})}>Search</Button>
+                                    &nbsp;
+                                    <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
+                                </Col>
+                            </Row>
+                        </Form>
+                    </TabPane>
 
-                    </Row>
-                    <br></br>
-                    <Row>
-                        <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
-                            <label>Stars</label>
-                            <Slider range value={[this.state.ratingLowQuery,this.state.ratingHighQuery]} max={5} min={1} step={0.5} onChange={this.handleRatingChange}/>
-                        </FormGroup></Col>
-                        <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
-                            <label>Price Level</label>
-                            <Radio.Group options={priceOptions} value={this.state.priceQuery} onChange={this.handlePriceChange} optionType="button"/>
-                        </FormGroup></Col>
-                        <Col flex={2}>
-                            <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.updateSearchResults}>Search</Button>
-                            &nbsp;
-                            <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
-                        </Col>
-
-
-                    </Row>
-
-
-                </Form>
-
-              </TabPane>
-              <TabPane tab="Recommend" key="2">
-              <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
-                  <Row>
-                      <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
-                          <label>Your name</label>
-                          <FormInput placeholder={this.state.userNameQuery? this.state.userNameQuery : 'e.g. John'} value={this.state.userNameQuery} onChange={this.handleUserNameQueryChange} />
-                      </FormGroup></Col>
-                      <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
-                          <label>Last 6 digit of your user ID</label>
-                          <FormInput placeholder={this.state.userIdQuery? this.state.userIdQuery : 'e.g. OiezZw'} value={this.state.userIdQuery} onChange={this.handleUserIdQueryChange} />
-                      </FormGroup></Col>
-                      <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
-                          <label>Location</label>
-                          <br/>
-                          <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
-                          <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
-                          <a href="#">Change city</a>
-                          </Cascader>
-                      </FormGroup></Col>
-                      <Col flex={2}><FormGroup style={{ width: '10vw', margin: '0 auto' }}>
-                          <label>Zip</label>
-                          <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
-                      </FormGroup></Col>
-                      <Col flex={2}>
-                          <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.updateRecommendResults}>Recommend</Button>
-                          &nbsp;
-                          <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
-                      </Col>
-                  </Row>
-              </Form>
-              </TabPane>
+                    <TabPane tab="Recommend" key="2">
+                        <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
+                          <Row>
+                              <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
+                                  <label>Your name</label>
+                                  <FormInput placeholder={this.state.userNameQuery? this.state.userNameQuery : 'e.g. John'} value={this.state.userNameQuery} onChange={this.handleUserNameQueryChange} />
+                              </FormGroup></Col>
+                              <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
+                                  <label>Last 6 digit of your user ID</label>
+                                  <FormInput placeholder={this.state.userIdQuery? this.state.userIdQuery : 'e.g. OiezZw'} value={this.state.userIdQuery} onChange={this.handleUserIdQueryChange} />
+                              </FormGroup></Col>
+                              <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
+                                  <label>Location</label>
+                                  <br/>
+                                  <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
+                                  <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
+                                  <a href="#">Change city</a>
+                                  </Cascader>
+                              </FormGroup></Col>
+                              <Col flex={2}><FormGroup style={{ width: '10vw', margin: '0 auto' }}>
+                                  <label>Zip</label>
+                                  <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
+                              </FormGroup></Col>
+                              <Col flex={2}>
+                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery ? this.updateRecommendResults : ()=>notification.error({message: 'Please select the location!'})}>Recommend</Button>
+                                  &nbsp;
+                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
+                              </Col>
+                          </Row>
+                        </Form>
+                    </TabPane>
                 </Tabs>
                 <Divider />
-                {/* TASK 24: Copy in the players table from the Home page, but use the following style tag: style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }} - this should be one line of code! */}
                     <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
                     <h3>Restaurants{this.state.selectedRestaurantId}</h3>
-
                     <Table dataSource={datasource1/*this.state.restaurantsResults*/} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
-                    <BackTop />
                     </div>
                 <Divider />
 
                 {this.state.selectedRestaurantDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                <Carousel autoplay /*afterChange={onChange}*/>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={false} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                </Carousel>
 
                 <Descriptions title={this.state.selectedRestaurantDetails.name} bordered layout='horizontal'>
                   <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails.categories}</Descriptions.Item>
@@ -625,9 +616,25 @@ class RestaurantsRecommender extends React.Component {
                   <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails.address}, <br/>
                   {this.state.selectedRestaurantDetails.city}, {this.state.selectedRestaurantDetails.State} {this.state.selectedRestaurantDetails.postal_code}</Descriptions.Item>
                 </Descriptions>
+
                 <br/>
-                </div> : null}
-                <BackTop/>
+                <Carousel autoplay /*afterChange={onChange}*/>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                  <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                  </div>
+                </Carousel>
+              </div> : null}
+              <p style={{textAlign: 'center'}}>CIS550 Project ©2022 Created by Team NewBee</p>
+              <BackTop/>
             </div>
 
         )
