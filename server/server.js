@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql      = require('mysql');
+const mysql = require('mysql');
 var cors = require('cors')
 
 
@@ -13,9 +13,9 @@ app.use(cors({ credentials: true, origin: ['http://localhost:3000'] }));
 //2.1 user login
 app.get('/login', routes.login)
 // 2.2 
-app.get('/friend_business/:userid', routes.friend_business)
+app.get('/friends/friend_business/:name', routes.friend_business)
 // 2.3
-app.get('/friend_connection/:id', routes.friend_connection)
+app.get('/friends/friend_connection/:id', routes.friend_connection)
 
 // 3.1
 app.get('/star_sci/:choice', routes.star_sci)
