@@ -1,7 +1,8 @@
 import React from 'react';
-import { Form, FormInput, FormGroup, Card, CardBody, CardTitle, Progress } from "shards-react";
 
 import {
+    Form,
+    Input,
     Table,
     Pagination,
     Select,
@@ -23,7 +24,7 @@ import { RadarChart } from 'react-vis';
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
-import { getBusinessByUserName, getUserByBusinessID } from '../fetcher'
+import { getBusinessByUserID, getUserByBusinessID } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
 import FormItem from 'antd/lib/form/FormItem';
 const wideFormat = format('.3r');
@@ -35,6 +36,7 @@ class FriendsPage extends React.Component {
         super(props)
         this.state = {
             userNameQuery: '',
+            userIDQuery: '',
             businessIDQuery: '',
             businessResults: [],
             userResults: [],
@@ -43,7 +45,8 @@ class FriendsPage extends React.Component {
         }
 
         this.handleUserNameQueryChange = this.handleUserNameQueryChange.bind(this)
-        this.hadleBusinessIDQueryChange = this.hadleBusinessIDQueryChange.bind(this)
+        this.handleUserIDQueryChange = this.handleUserIDQueryChange.bind(this)
+        this.handleBusinessIDQueryChange = this.handleBusinessIDQueryChange.bind(this)
         this.updateBusinessSearchResults = this.updateBusinessSearchResults.bind(this)
         this.updateUserSearchResults = this.updateUserSearchResults.bind(this)
     }
@@ -54,7 +57,13 @@ class FriendsPage extends React.Component {
         })
     }
 
-    hadleBusinessIDQueryChange(event) {
+    handleUserIDQueryChange(event) {
+        this.setState({
+            userIDQuery: event.target.value
+        })
+    }
+
+    handleBusinessIDQueryChange(event) {
         this.setState({
             businessIDQuery: event.target.value
         })
@@ -62,11 +71,12 @@ class FriendsPage extends React.Component {
 
     updateBusinessSearchResults() {
 
-        getBusinessByUserName(this.state.userNameQuery, null, null).then(res => {
+        getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
             this.setState({
                 businessResults: res.results
             })
         })
+
     }
 
     updateUserSearchResults() {
@@ -81,7 +91,7 @@ class FriendsPage extends React.Component {
 
     componentDidMount() {
 
-        getBusinessByUserName(this.state.userNameQuery, null, null).then(res => {
+        getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
             this.setState({ businessResults: res.results })
         })
 
@@ -98,19 +108,43 @@ class FriendsPage extends React.Component {
 
                 <MenuBar />
                 <Divider orientation="left">
-                    <h3>Find Friend</h3>
+                    <h3>Login</h3>
                 </Divider>
-                <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
-                    <Row>
-                        <Col flex={2}><FormGroup style={{ width: '40vw', margin: '0 auto' }}>
-                            <label>Search Friend Name</label>
-                            <FormInput placeholder="Friend Name" value={this.state.userNameQuery} onChange={this.handleUserNameQueryChange} />
-                        </FormGroup></Col>
-                        <Col flex={3}><FormGroup style={{ width: '10vw' }}>
-                            <Button style={{ marginTop: '5vh' }} type="primary" onClick={this.updateBusinessSearchResults}>Search</Button>
-                        </FormGroup></Col>
-                    </Row>
-                </Form>
+                <Row>
+                    <Col span={12} offset={3}>
+                        <Form
+                            name="basic"
+                            labelCol={{ span: 8 }}
+                            wrapperCol={{ span: 16 }}
+                        >
+                            <Form.Item
+                                label="Username"
+                                name="username"
+                                rules={[{ required: true, message: 'Please input your username!' }]}
+                                value={this.state.userNameQuery}
+                            >
+                                <Input />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Password"
+                                name="password"
+                                rules={[{ required: true, message: 'Please input your password!' }]}
+                                value={this.state.businessIDQuery}
+                                onChange={this.handleUserIDQueryChange}
+
+                            >
+                                <Input.Password />
+                            </Form.Item>
+
+                            <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+                                <Button type="primary" htmlType="submit" onClick={this.updateBusinessSearchResults}>
+                                    Submit
+                                </Button>
+                            </Form.Item>
+                        </Form>
+                    </Col>
+                </Row>
 
                 <Divider orientation="left">
                     <h3>1-Connection</h3>
@@ -148,17 +182,24 @@ class FriendsPage extends React.Component {
                     </div>
                     <div class="section two" id="section2" style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
                         <h5>Top fans</h5>
-                        <Form label="One Connection">
+                        {/* <Form label="One Connection">
                             <Switch defaultChecked checkedChildren="1-Connection ON" unCheckedChildren="1-Connection OFF" onChange={() => { this.setState({ oneConnection: !this.state.oneConnection }) }} />
                         </Form>
                         <Form label="two Connection">
                             <Switch defaultChecked checkedChildren="2-Connection ON" unCheckedChildren="2-Connection OFF" onChange={() => { this.setState({ twoConnection: !this.state.twoConnection }) }} />
-                        </Form>
+                        </Form> */}
                         <Table dataSource={this.state.userResults} pagination={{ pageSizeOptions: [5, 10], defaultPageSize: 5, showQuickJumper: true }}  >
                             {/* RP.business_id,Business.name,Business.address,Business.city,Business.State */}
                             <Column title="User_ID" dataIndex="user_id" key="user_id" />
                             <Column title="Name" dataIndex="name" key="name" />
                             <Column title="N-Connection" dataIndex="N" key="N"
+                                filters={[
+                                    { text: '1-connection', value: 1 },
+                                    { text: '2-connection', value: 2 },
+                                ]}
+                                filterMode='tree'
+                                filterSearch={true}
+                                onFilter={(value, record) => record.N == value}
                             />
                         </Table>
                     </div>

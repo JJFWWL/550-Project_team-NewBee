@@ -6,7 +6,6 @@ import {
 	Switch
 } from 'react-router-dom';
 
-import HomePage from './pages/HomePage';
 import FriendPage from './pages/FriendPage';
 import 'antd/dist/antd.css';
 
@@ -21,7 +20,7 @@ ReactDOM.render(
 				<Route exact
 					path="/"
 					render={() => (
-						<HomePage />
+						<RestaurantsRecommender />
 					)} />
 				<Route exact
 					path="/friends"

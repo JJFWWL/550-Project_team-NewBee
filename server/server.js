@@ -13,7 +13,7 @@ app.use(cors({ credentials: true, origin: ['http://localhost:3000'] }));
 //2.1 user login
 app.get('/login', routes.login)
 // 2.2 
-app.get('/friends/friend_business/:name', routes.friend_business)
+app.get('/friends/friend_business/:userid', routes.friend_business)
 // 2.3
 app.get('/friends/friend_connection/:id', routes.friend_connection)
 

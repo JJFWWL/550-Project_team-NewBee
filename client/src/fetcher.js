@@ -31,12 +31,13 @@ const getRestaurantRecommendation = async (userName, userId, state, city, zip, p
     return res.json()
 }
 
-const getBusinessByUserName = async (name, page, pagesize) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/friends/friend_business/${name}?page=${page}&pagesize=${pagesize}`, {
+const getBusinessByUserID = async (userid, page, pagesize) => {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/friends/friend_business/${userid}?page=${page}&pagesize=${pagesize}`, {
         method: 'GET',
     })
     return res.json()
 }
+
 
 const getUserByBusinessID = async (id, page, pagesize) => {
     var res = await fetch(`http://${config.server_host}:${config.server_port}/friends/friend_connection/${id}?page=${page}&pagesize=${pagesize}`, {
@@ -50,6 +51,6 @@ export {
     getRestaurant,
     getRestaurantSearch,
     getRestaurantRecommendation,
-    getBusinessByUserName,
+    getBusinessByUserID,
     getUserByBusinessID
 }
