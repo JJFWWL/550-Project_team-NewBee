@@ -6,7 +6,7 @@ import {
 } from 'antd'
 
 import MenuBar from '../components/MenuBar';
-
+import { getAllMatches, getAllPlayers } from '../fetcher';
 import InternalPreviewGroup from 'antd/lib/image/PreviewGroup';
 import { Group } from 'antd/lib/avatar';
 const { Column, ColumnGroup } = Table;
@@ -79,11 +79,21 @@ class HomePage extends React.Component {
   }
 
   leagueOnChange(value) {
-
+    getAllMatches(null, null, value).then(res => {
+       this.setState({ matchesResults: res.results })
+     })
   }
 
   componentDidMount() {
+    getAllMatches(null, null, 'D1').then(res => {
+       this.setState({ matchesResults: res.results })
+     })
 
+     getAllPlayers().then(res => {
+       console.log(res.results)
+       // TASK 1: set the correct state attribute to res.results
+       this.setState({ playersResults: res.results })
+     })
   }
 
 
@@ -110,6 +120,7 @@ class HomePage extends React.Component {
 
           <Table onRow={(record, rowIndex) => {
             return {
+              onClick: event => { this.goToMatch(record.MatchId) },
               onClick: event => { this.goToMatch(record.MatchId) }, // clicking a row takes the user to a detailed view of the match in the /matches page using the MatchId parameter
             };
           }} dataSource={this.state.matchesResults} pagination={{ pageSizeOptions: [5, 10], defaultPageSize: 5, showQuickJumper: true }}>
