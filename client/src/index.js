@@ -6,13 +6,14 @@ import {
 	Switch
 } from 'react-router-dom';
 
-import HomePage from './pages/HomePage';
-import FriendPage from './pages/FriendPage';
+
 import 'antd/dist/antd.css';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "shards-ui/dist/css/shards.min.css"
 import RestaurantsRecommender from './pages/RestaurantsRecommender';
+import FriendPage from './pages/FriendPage';
+import ScientistPage from './pages/ScientistPage';
 
 ReactDOM.render(
 	<div>
@@ -21,7 +22,7 @@ ReactDOM.render(
 				<Route exact
 					path="/"
 					render={() => (
-						<HomePage />
+						<RestaurantsRecommender />
 					)} />
 				<Route exact
 					path="/friends"
@@ -33,6 +34,12 @@ ReactDOM.render(
 					render={() => (
 						<RestaurantsRecommender />
 					)} />
+				<Route exact
+					path="/scientists"
+					render={() => (
+						<ScientistPage />
+					)} />
+
 			</Switch>
 		</Router>
 	</div>,
