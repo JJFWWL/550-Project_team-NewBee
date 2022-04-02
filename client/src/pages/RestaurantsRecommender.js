@@ -396,16 +396,20 @@ class RestaurantsRecommender extends React.Component {
               stars: 3.5,
               review_count: 10,
               categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
-              RestaurantsPriceRange2: '2',
-              photo_id:'__0nof27AJTcA_es7-1PCw',
+              price_range: '2',
+              photo_id:'CCbMJ0qYlYAB3GJ8DA-pFg',
               is_open: 1,
               postal_code: '02934',
               address: '12345 Montreal St.',
-              Monday: '7:00-21:00',
-              Tuesday:'5:00-20:00',
-              Saturday: '12:00-23:00',
-              Sunday:'16:00-21:00'
+              Monday: '4:00 PM - 1:00 AM',
+              Tuesday:'4:00 PM - 2:00 AM',
+              Wednesday: '4:00 PM - 3:00 AM',
+              Thursday: '4:00 PM - 4:00 AM',
+              Fridat: '4:00 PM - 5:00 AM',
+              Saturday: '4:00 PM - 6:00 AM',
+              Sunday:'4:00 PM - 7:00 AM'
             },
+            selectedRestaurantPhotos: ['UFXViemulVHRNdQsJNkE4g', 'sM3i6QTGI2_ZCXBHKwNZCA'],
             restaurantsResults: []
 
         }
@@ -494,7 +498,8 @@ class RestaurantsRecommender extends React.Component {
         // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
         getRestaurant(this.state.selectedRestaurantId).then(res => {
 
-            this.setState({selectedRestaurantDetails: res.results[0]})
+            this.setState({selectedRestaurantDetails: res.results[0],
+            selectedRestaurantPhotos: [res.results[0].photo_id, res.results[1].photo_id, res.results[2].photo_id, res.results[3].photo_id]})
         })
 
         getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
@@ -579,7 +584,7 @@ class RestaurantsRecommender extends React.Component {
                                   <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
                               </FormGroup></Col>
                               <Col flex={2}>
-                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery ? this.updateRecommendResults : ()=>notification.error({message: 'Please select the location!'})}>Recommend</Button>
+                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery!='' && this.state.userIdQuery!='' && this.state.userNameQuery!='' ? this.updateRecommendResults : ()=>notification.error({message: 'Name, ID, and Location are required for recommendation!'})}>Recommend</Button>
                                   &nbsp;
                                   <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
                               </Col>
@@ -598,7 +603,7 @@ class RestaurantsRecommender extends React.Component {
 
                 <Descriptions title={this.state.selectedRestaurantDetails.name} bordered layout='horizontal'>
                   <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails.categories}</Descriptions.Item>
-                  <Descriptions.Item label="Price"><Rate character="$" count={4} disabled value={this.state.selectedRestaurantDetails.RestaurantsPriceRange2}/></Descriptions.Item>
+                  <Descriptions.Item label="Price"><Rate character="$" count={4} disabled value={this.state.selectedRestaurantDetails.price_range}/></Descriptions.Item>
                   <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails.stars}/></Descriptions.Item>
                   <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails.review_count}</Descriptions.Item>
                   <Descriptions.Item label="In Business?">
@@ -620,17 +625,17 @@ class RestaurantsRecommender extends React.Component {
                 <br/>
                 <Carousel autoplay /*afterChange={onChange}*/>
                   <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[0]}.jpg`} /></h3>
                   </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
-                  <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
-                  </div>
+                  { this.state.selectedRestaurantPhotos[1] ? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[1]}.jpg`} /></h3>
+                  </div> : null }
+                  { this.state.selectedRestaurantPhotos[2] ? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[2]}.jpg`} /></h3>
+                  </div> : null }
+                  { this.state.selectedRestaurantPhotos[3] ? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[3]}.jpg`} /></h3>
+                  </div> : null }
                 </Carousel>
               </div> : null}
               <p style={{textAlign: 'center'}}>CIS550 Project ©2022 Created by Team NewBee</p>
