@@ -24,7 +24,7 @@ import { RadarChart } from 'react-vis';
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
-import { getBusinessByUserID, getUserByBusinessID } from '../fetcher'
+import { getUserByNameAndID, getBusinessByUserID, getUserByBusinessID } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
 import FormItem from 'antd/lib/form/FormItem';
 const wideFormat = format('.3r');
@@ -35,21 +35,38 @@ class FriendsPage extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            loginNameQuery: '',
+            loginIDQuery: '',
             userNameQuery: '',
             userIDQuery: '',
             businessIDQuery: '',
+            loginUserResults: [],
             businessResults: [],
             userResults: [],
             oneConnection: false,
             twoConnection: false
         }
-
+        this.handleLoginNameQueryChnage = this.handleLoginNameQueryChange.bind(this)
+        this.handleLoginIDQueryChnage = this.handleLoginIDQueryChnage.bind(this)
         this.handleUserNameQueryChange = this.handleUserNameQueryChange.bind(this)
         this.handleUserIDQueryChange = this.handleUserIDQueryChange.bind(this)
         this.handleBusinessIDQueryChange = this.handleBusinessIDQueryChange.bind(this)
+        this.updateLoginResult = this.updateLoginResult.bind(this)
         this.updateBusinessSearchResults = this.updateBusinessSearchResults.bind(this)
         this.updateUserSearchResults = this.updateUserSearchResults.bind(this)
     }
+
+    handleLoginNameQueryChange(event) {
+        this.setState({
+            loginNameQuery: event.target.value
+        })
+    }
+    handleLoginIDQueryChnage(event) {
+        this.setState({
+            loginIDQuery: event.target.value
+        })
+    }
+
 
     handleUserNameQueryChange(event) {
         this.setState({
@@ -69,8 +86,15 @@ class FriendsPage extends React.Component {
         })
     }
 
-    updateBusinessSearchResults() {
+    updateLoginResult() {
+        getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
+            this.setState({
+                loginUserResults: res.results
+            })
+        })
+    }
 
+    updateBusinessSearchResults() {
         getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
             this.setState({
                 businessResults: res.results
@@ -90,6 +114,10 @@ class FriendsPage extends React.Component {
 
 
     componentDidMount() {
+
+        getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
+            this.setState({ loginUserResults: res.results })
+        })
 
         getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
             this.setState({ businessResults: res.results })
@@ -121,7 +149,8 @@ class FriendsPage extends React.Component {
                                 label="Username"
                                 name="username"
                                 rules={[{ required: true, message: 'Please input your username!' }]}
-                                value={this.state.userNameQuery}
+                                value={this.state.loginNameQuery}
+                            // onChange={this.handleLoginNameQueryChange}
                             >
                                 <Input />
                             </Form.Item>
@@ -130,15 +159,15 @@ class FriendsPage extends React.Component {
                                 label="Password"
                                 name="password"
                                 rules={[{ required: true, message: 'Please input your password!' }]}
-                                value={this.state.businessIDQuery}
-                                onChange={this.handleUserIDQueryChange}
+                                value={this.state.loginIDQuery}
+                            // onChange={this.handleLoginIDQueryChnage}
 
                             >
                                 <Input.Password />
                             </Form.Item>
 
                             <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                                <Button type="primary" htmlType="submit" onClick={this.updateBusinessSearchResults}>
+                                <Button type="primary" htmlType="submit" onClick={this.updateLoginResult}>
                                     Submit
                                 </Button>
                             </Form.Item>
