@@ -1,8 +1,8 @@
 
 {
-    "rds_host": "database-newbee.ca2j33wsqzo3.us-east-1.rds.amazonaws.com",
+    "rds_host": "database-newbee.cmya8s5xkkje.us-east-1.rds.amazonaws.com",
     "rds_port": "3306",
-    "rds_user": "newbee",
+    "rds_user": "newbeedata",
     "rds_password" : "newbee1234",
     "rds_db": "Yelp_project",
     "server_host": "127.0.0.1",
