@@ -47,7 +47,7 @@ async function login(req, res) {
 
 // page 2.2
 //changed for project to get the user favorite business(=5) and return as result
-//http://localhost:8080/friend_business/userid/?page=2&pagesize=5
+//http://localhost:8080/friends/friend_business/userid/?page=2&pagesize=5
 async function friend_business(req, res) {
 
   const userid = req.params.userid ? req.params.userid : "Pf7FI0OukC_CEcCz0ZxoUw"
@@ -96,16 +96,22 @@ async function friend_business(req, res) {
 }
 
 
-// Route 3.2 (handler)
+
+// Route 2.3 (handler)
 //changed for project to get the user favorite business(>=4) and return as result
-//http://localhost:8080/friend_connection/businessID/?page=2&pagesize=5
+//http://localhost:8080/friends/friend_connection/businessID/?userID=Pf7FI0OukC_CEcCz0ZxoUw&page=2&pagesize=5
+
+
 async function friend_connection(req, res) {
 
 
   const ID = req.params.id ? req.params.id : "3dy8So9wPWTYJSsrFvHDMg"
 
+  const userID = req.query.userID ? req.query.userID : "Pf7FI0OukC_CEcCz0ZxoUw";
 
   if (req.query.page && !isNaN(req.query.page)) {
+      
+
 
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
@@ -114,16 +120,25 @@ async function friend_connection(req, res) {
     //WHERE Division = '${league}'
     //ORDER BY HomeTeam, AwayTeam ${stringLimit}
     connection.query(
-      `WITH ONE AS (
+
+      `WITH ZERO_B AS(
+        SELECT RestaurantsPriceRange2, stars, new_categories
+        FROM Business
+        WHERE business_id='${ID}'
+    ),
+      ONE AS (
+
           SELECT DISTINCT RP.user_id, user.name, 1 AS N
           FROM review_Portland RP
                    JOIN user ON RP.user_id = user.user_id
           WHERE RP.stars = 5
-            AND RP.business_id = '${ID}'
+            AND RP.business_id = '${ID}' AND RP.user_id!='${userID}'
       ),
               TWO_B AS(
           SELECT DISTINCT review_Portland.business_id
           FROM ONE LEFT JOIN review_Portland ON review_Portland.user_id=ONE.user_id
+          JOIN Business ON review_Portland.business_id=Business.business_id
+          JOIN ZERO_B ON Business.new_categories=ZERO_B.new_categories
           WHERE review_Portland.stars=5
       
               ),
@@ -131,7 +146,7 @@ async function friend_connection(req, res) {
           SELECT DISTINCT review_Portland.user_id, user.name, 2 AS N
           FROM review_Portland JOIN TWO_B ON review_Portland.business_id=TWO_B.business_id
           JOIN user ON review_Portland.user_id= user.user_id
-          WHERE review_Portland.stars=5
+          WHERE review_Portland.stars=5  AND review_Portland.user_id!='${userID}'
           ),
          TOT AS(
          SELECT * FROM ONE
@@ -156,16 +171,25 @@ async function friend_connection(req, res) {
 
   } else {
     // we have implemented this for you to see how to return results by querying the database
-    connection.query(`WITH ONE AS (
+
+    connection.query(`WITH ZERO_B AS(
+      SELECT RestaurantsPriceRange2, stars, new_categories
+      FROM Business
+      WHERE business_id='${ID}'
+  ),
+    ONE AS (
+
         SELECT DISTINCT RP.user_id, user.name, 1 AS N
         FROM review_Portland RP
                  JOIN user ON RP.user_id = user.user_id
         WHERE RP.stars = 5
-          AND RP.business_id = '${ID}'
+          AND RP.business_id = '${ID}'  AND RP.user_id!='${userID}'
     ),
             TWO_B AS(
         SELECT DISTINCT review_Portland.business_id
         FROM ONE LEFT JOIN review_Portland ON review_Portland.user_id=ONE.user_id
+        JOIN Business ON review_Portland.business_id=Business.business_id
+        JOIN ZERO_B ON Business.new_categories=ZERO_B.new_categories
         WHERE review_Portland.stars=5
     
             ),
@@ -173,7 +197,7 @@ async function friend_connection(req, res) {
         SELECT DISTINCT review_Portland.user_id, user.name, 2 AS N
         FROM review_Portland JOIN TWO_B ON review_Portland.business_id=TWO_B.business_id
         JOIN user ON review_Portland.user_id= user.user_id
-        WHERE review_Portland.stars=5
+        WHERE review_Portland.stars=5  AND review_Portland.user_id!='${userID}'
         ),
        TOT AS(
        SELECT * FROM ONE
@@ -197,7 +221,7 @@ async function friend_connection(req, res) {
 }
 
 //page 3.1 star distribution_state level(input state name)
-//http://localhost:8080/star_sci/choice/name=OR&page=2&pagesize=5
+//http://localhost:8080/star_sci/choice/?name=OR&page=2&pagesize=5
 
 async function star_sci(req, res) {
 
