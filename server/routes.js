@@ -98,59 +98,6 @@ async function friend_business(req, res) {
 
 
 
-// Route 2.3 (handler)
-//changed for project to get the user favorite business(>=4) and return as result
-//http://localhost:8080/friends/friend_connection/businessID/?userID=Pf7FI0OukC_CEcCz0ZxoUw&page=2&pagesize=5
-
-async function friend_connection(req, res) {
-    
-
-  const ID = req.params.id ? req.params.id : "3dy8So9wPWTYJSsrFvHDMg"
-  const userID = req.query.userID ? req.query.userID : "Pf7FI0OukC_CEcCz0ZxoUw";
-
-  if (req.query.page && !isNaN(req.query.page)) {
-
-    const page = parseInt(req.query.page);
-    const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
-    const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
-
- 
-    connection.query(
-      `SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
-          FROM review_Portland RP JOIN Business ON RP.business_id=Business.business_id
-          WHERE RP.user_id='${userid}' AND RP.stars=5 ${stringLimit}`,
-
-      function (error, results, fields) {
-        if (error) {
-          console.log(error);
-          res.json({ error: error });
-        } else if (results) {
-          res.json({ results: results });
-        } else {
-          res.json({ results: [] });
-        }
-      }
-    );
-
-  } else {
-    // we have implemented this for you to see how to return results by querying the database
-    connection.query(`SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
-        FROM review_Portland RP JOIN Business ON RP.business_id=Business.business_id
-        WHERE RP.user_id='${userid}' AND RP.stars=5`, function (error, results, fields) {
-
-      if (error) {
-        console.log(error)
-        res.json({ error: error })
-      } else if (results) {
-        res.json({ results: results })
-      } else {
-        res.json({ results: [] });
-      }
-    });
-  }
-}
-
-
 
 // Route 2.3 (handler)
 //changed for project to get the user favorite business(>=4) and return as result
