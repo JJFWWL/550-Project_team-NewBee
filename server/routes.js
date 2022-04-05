@@ -64,7 +64,7 @@ async function friend_business(req, res) {
         //ORDER BY HomeTeam, AwayTeam ${stringLimit}
         connection.query(
           `SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
-          FROM review_Portland RP JOIN Business ON RP.business_id=Business.business_id
+          FROM review RP JOIN Business ON RP.business_id=Business.business_id
           WHERE RP.user_id='${userid}' AND RP.stars=5 ${stringLimit}`,
           
             function (error, results, fields) {
@@ -82,7 +82,7 @@ async function friend_business(req, res) {
     } else {
         // we have implemented this for you to see how to return results by querying the database
         connection.query(`SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
-        FROM review_Portland RP JOIN Business ON RP.business_id=Business.business_id
+        FROM review RP JOIN Business ON RP.business_id=Business.business_id
         WHERE RP.user_id='${userid}' AND RP.stars=5`, function (error, results, fields) {
 
             if (error) {
@@ -116,8 +116,7 @@ async function friend_connection(req, res) {
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
 
-    //WHERE Division = '${league}'
-    //ORDER BY HomeTeam, AwayTeam ${stringLimit}
+ 
     connection.query(
       `WITH ZERO_B AS(
         SELECT RestaurantsPriceRange2, stars, new_categories
@@ -126,24 +125,24 @@ async function friend_connection(req, res) {
     ),
       ONE AS (
           SELECT DISTINCT RP.user_id, user.name, 1 AS N
-          FROM review_Portland RP
+          FROM review RP
                    JOIN user ON RP.user_id = user.user_id
           WHERE RP.stars = 5
             AND RP.business_id = '${ID}' AND RP.user_id!='${userID}'
       ),
               TWO_B AS(
-          SELECT DISTINCT review_Portland.business_id
-          FROM ONE LEFT JOIN review_Portland ON review_Portland.user_id=ONE.user_id
-          JOIN Business ON review_Portland.business_id=Business.business_id
+          SELECT DISTINCT review.business_id
+          FROM ONE LEFT JOIN review ON review.user_id=ONE.user_id
+          JOIN Business ON review.business_id=Business.business_id
           JOIN ZERO_B ON Business.new_categories=ZERO_B.new_categories
-          WHERE review_Portland.stars=5
+          WHERE review.stars=5
       
               ),
           TWO AS (
-          SELECT DISTINCT review_Portland.user_id, user.name, 2 AS N
-          FROM review_Portland JOIN TWO_B ON review_Portland.business_id=TWO_B.business_id
-          JOIN user ON review_Portland.user_id= user.user_id
-          WHERE review_Portland.stars=5  AND review_Portland.user_id!='${userID}'
+          SELECT DISTINCT review.user_id, user.name, 2 AS N
+          FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
+          JOIN user ON review.user_id= user.user_id
+          WHERE review.stars=5  AND review.user_id!='${userID}'
           ),
          TOT AS(
          SELECT * FROM ONE
@@ -175,24 +174,24 @@ async function friend_connection(req, res) {
   ),
     ONE AS (
         SELECT DISTINCT RP.user_id, user.name, 1 AS N
-        FROM review_Portland RP
+        FROM review RP
                  JOIN user ON RP.user_id = user.user_id
         WHERE RP.stars = 5
           AND RP.business_id = '${ID}'  AND RP.user_id!='${userID}'
     ),
             TWO_B AS(
-        SELECT DISTINCT review_Portland.business_id
-        FROM ONE LEFT JOIN review_Portland ON review_Portland.user_id=ONE.user_id
-        JOIN Business ON review_Portland.business_id=Business.business_id
+        SELECT DISTINCT review.business_id
+        FROM ONE LEFT JOIN review ON review.user_id=ONE.user_id
+        JOIN Business ON review.business_id=Business.business_id
         JOIN ZERO_B ON Business.new_categories=ZERO_B.new_categories
-        WHERE review_Portland.stars=5
+        WHERE review.stars=5
     
             ),
         TWO AS (
-        SELECT DISTINCT review_Portland.user_id, user.name, 2 AS N
-        FROM review_Portland JOIN TWO_B ON review_Portland.business_id=TWO_B.business_id
-        JOIN user ON review_Portland.user_id= user.user_id
-        WHERE review_Portland.stars=5  AND review_Portland.user_id!='${userID}'
+        SELECT DISTINCT review.user_id, user.name, 2 AS N
+        FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
+        JOIN user ON review.user_id= user.user_id
+        WHERE review.stars=5  AND review.user_id!='${userID}'
         ),
        TOT AS(
        SELECT * FROM ONE
@@ -232,7 +231,7 @@ async function star_sci(req, res) {
             `SELECT city, SUM(IF(stars<2,1,0)) AS 1star_count,SUM(IF(stars<3 AND stars>=2,1,0)) AS 2star_count,SUM(IF(stars<4 AND stars>=3,1,0)) AS 3star_count,
             SUM(IF(stars<5 AND stars>=4,1,0)) AS 4star_count,SUM(IF(stars=5,1,0)) AS 5star_count,SUM(IF(stars<2,1,0))/SUM(IF(stars>0,1,0)) AS 1star_percent, SUM(IF(stars<3 AND stars>=2,1,0))/SUM(IF(stars>0,1,0)) AS 2star_percent,
             SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
-            FROM Business
+            FROM BusinessFull
             WHERE state='${name}' 
             GROUP BY city ${stringLimit}`,
             
@@ -253,7 +252,7 @@ async function star_sci(req, res) {
           `SELECT postal_code, SUM(IF(stars<2,1,0)) AS 1star_count,SUM(IF(stars<3 AND stars>=2,1,0)) AS 2star_count,SUM(IF(stars<4 AND stars>=3,1,0)) AS 3star_count,
           SUM(IF(stars<5 AND stars>=4,1,0)) AS 4star_count,SUM(IF(stars=5,1,0)) AS 5star_count,SUM(IF(stars<2,1,0))/SUM(IF(stars>0,1,0)) AS 1star_percent, SUM(IF(stars<3 AND stars>=2,1,0))/SUM(IF(stars>0,1,0)) AS 2star_percent,
           SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
-          FROM Business
+          FROM BusinessFull
           WHERE city='${name}' 
           GROUP BY postal_code ${stringLimit}`,
           
@@ -272,7 +271,7 @@ async function star_sci(req, res) {
         const name=req.query.name? req.query.name: "02143";
         connection.query(
           `SELECT stars,COUNT(*) AS count,COUNT(*)/SUM(COUNT(*)) OVER () AS percent
-          FROM Business
+          FROM BusinessFull
           WHERE postal_code='${name}' 
           GROUP BY stars
           ORDER BY stars ${stringLimit}`,
@@ -300,7 +299,7 @@ async function star_sci(req, res) {
         `SELECT city, SUM(IF(stars<2,1,0)) AS 1star_count,SUM(IF(stars<3 AND stars>=2,1,0)) AS 2star_count,SUM(IF(stars<4 AND stars>=3,1,0)) AS 3star_count,
         SUM(IF(stars<5 AND stars>=4,1,0)) AS 4star_count,SUM(IF(stars=5,1,0)) AS 5star_count,SUM(IF(stars<2,1,0))/SUM(IF(stars>0,1,0)) AS 1star_percent, SUM(IF(stars<3 AND stars>=2,1,0))/SUM(IF(stars>0,1,0)) AS 2star_percent,
         SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
-        FROM Business
+        FROM BusinessFull
         WHERE state='${name}'
         GROUP BY city`,
         
@@ -321,7 +320,7 @@ async function star_sci(req, res) {
       `SELECT postal_code, SUM(IF(stars<2,1,0)) AS 1star_count,SUM(IF(stars<3 AND stars>=2,1,0)) AS 2star_count,SUM(IF(stars<4 AND stars>=3,1,0)) AS 3star_count,
       SUM(IF(stars<5 AND stars>=4,1,0)) AS 4star_count,SUM(IF(stars=5,1,0)) AS 5star_count,SUM(IF(stars<2,1,0))/SUM(IF(stars>0,1,0)) AS 1star_percent, SUM(IF(stars<3 AND stars>=2,1,0))/SUM(IF(stars>0,1,0)) AS 2star_percent,
       SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
-      FROM Business
+      FROM BusinessFull
       WHERE city='${name}' 
       GROUP BY postal_code`,
       
@@ -340,7 +339,7 @@ async function star_sci(req, res) {
     const name=req.query.name? req.query.name: "02143";
     connection.query(
       `SELECT stars,COUNT(*) AS count,COUNT(*)/SUM(COUNT(*)) OVER () AS percent
-      FROM Business
+      FROM BusinessFull
       WHERE postal_code='${name}'
       GROUP BY stars
       ORDER BY stars;`,
@@ -379,7 +378,7 @@ async function price_sci(req, res) {
             `SELECT city, SUM(IF(RestaurantsPriceRange2=1,1,0)) AS 1price_count,SUM(IF(RestaurantsPriceRange2=2,1,0)) AS 2price_count,SUM(IF(RestaurantsPriceRange2=3,1,0)) AS 3price_count,
             SUM(IF(RestaurantsPriceRange2=4,1,0)) AS 4price_count,SUM(IF(RestaurantsPriceRange2=1,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 1price_percent, SUM(IF(RestaurantsPriceRange2=2,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 2price_percent,
             SUM(IF(RestaurantsPriceRange2=3,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 3price_percent,SUM(IF(RestaurantsPriceRange2=4,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 4price_percent
-            FROM Business
+            FROM BusinessFull
             WHERE State='${name}'
             GROUP BY city
             HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 ${stringLimit}`,
@@ -401,7 +400,7 @@ async function price_sci(req, res) {
           `SELECT postal_code, SUM(IF(RestaurantsPriceRange2=1,1,0)) AS 1price_count,SUM(IF(RestaurantsPriceRange2=2,1,0)) AS 2price_count,SUM(IF(RestaurantsPriceRange2=3,1,0)) AS 3price_count,
           SUM(IF(RestaurantsPriceRange2=4,1,0)) AS 4price_count,SUM(IF(RestaurantsPriceRange2=1,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 1price_percent, SUM(IF(RestaurantsPriceRange2=2,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 2price_percent,
           SUM(IF(RestaurantsPriceRange2=3,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 3price_percent,SUM(IF(RestaurantsPriceRange2=4,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 4price_percent
-          FROM Business
+          FROM BusinessFull
           WHERE city='${name}'
           GROUP BY postal_code
           HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 ${stringLimit}`,
@@ -421,7 +420,7 @@ async function price_sci(req, res) {
         const name=req.query.name? req.query.name: "02143";
         connection.query(
           `SELECT RestaurantsPriceRange2, COUNT(RestaurantsPriceRange2)/SUM(COUNT(RestaurantsPriceRange2)) OVER () AS percent
-          FROM Business
+          FROM BusinessFull
           WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
           GROUP BY RestaurantsPriceRange2
           ORDER BY RestaurantsPriceRange2 ${stringLimit}`,
@@ -449,7 +448,7 @@ async function price_sci(req, res) {
         `SELECT city, SUM(IF(RestaurantsPriceRange2=1,1,0)) AS 1price_count,SUM(IF(RestaurantsPriceRange2=2,1,0)) AS 2price_count,SUM(IF(RestaurantsPriceRange2=3,1,0)) AS 3price_count,
         SUM(IF(RestaurantsPriceRange2=4,1,0)) AS 4price_count,SUM(IF(RestaurantsPriceRange2=1,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 1price_percent, SUM(IF(RestaurantsPriceRange2=2,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 2price_percent,
         SUM(IF(RestaurantsPriceRange2=3,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 3price_percent,SUM(IF(RestaurantsPriceRange2=4,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 4price_percent
-        FROM Business
+        FROM BusinessFull
         WHERE State='${name}'
         GROUP BY city
         HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0`,
@@ -471,7 +470,7 @@ async function price_sci(req, res) {
       `SELECT postal_code, SUM(IF(RestaurantsPriceRange2=1,1,0)) AS 1price_count,SUM(IF(RestaurantsPriceRange2=2,1,0)) AS 2price_count,SUM(IF(RestaurantsPriceRange2=3,1,0)) AS 3price_count,
       SUM(IF(RestaurantsPriceRange2=4,1,0)) AS 4price_count,SUM(IF(RestaurantsPriceRange2=1,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 1price_percent, SUM(IF(RestaurantsPriceRange2=2,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 2price_percent,
       SUM(IF(RestaurantsPriceRange2=3,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 3price_percent,SUM(IF(RestaurantsPriceRange2=4,1,0))/SUM(IF(RestaurantsPriceRange2>0,1,0)) AS 4price_percent
-      FROM Business
+      FROM BusinessFull
       WHERE city='${name}'
       GROUP BY postal_code
       HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0`,
@@ -491,7 +490,7 @@ async function price_sci(req, res) {
     const name=req.query.name? req.query.name: "02143";
     connection.query(
       `SELECT RestaurantsPriceRange2, COUNT(RestaurantsPriceRange2)/SUM(COUNT(RestaurantsPriceRange2)) OVER () AS percent
-      FROM Business
+      FROM BusinessFull
       WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
       GROUP BY RestaurantsPriceRange2
       ORDER BY RestaurantsPriceRange2`,
@@ -524,7 +523,7 @@ async function avg_sci(req,res){
     const stringLimit="LIMIT "+(page - 1) * pageSize + "," + pageSize;
       connection.query(
         `SELECT ${choice}, COUNT(stars) AS num,AVG(RestaurantsPriceRange2) AS avg_price, AVG(stars) AS avg_review
-        FROM Business
+        FROM BusinessFull
         GROUP BY ${choice}
         ORDER BY num DESC ${stringLimit}`,
     
@@ -542,7 +541,7 @@ async function avg_sci(req,res){
   }else{
     connection.query(
       `SELECT ${choice}, COUNT(stars) AS num,AVG(RestaurantsPriceRange2) AS avg_price, AVG(stars) AS avg_review
-      FROM Business
+      FROM BusinessFull
       GROUP BY ${choice}
       ORDER BY num DESC`,
   
@@ -567,7 +566,7 @@ async function cat_map(req,res){
     const name=req.query.name;
     connection.query(
       `SELECT new_categories,COUNT(*) AS count,COUNT(*)/SUM(COUNT(*)) OVER () AS percent
-      FROM Business
+      FROM BusinessFull
       WHERE ${choice}='${name}'
       GROUP BY new_categories
       ORDER BY count DESC`,
