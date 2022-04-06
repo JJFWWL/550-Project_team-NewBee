@@ -20,7 +20,7 @@ import {
     Tag,
     Space
 } from 'antd'
-import { Pie } from '@ant-design/plots';
+// import { Pie } from '@ant-design/plots';
 import * as V from 'victory';
 import { RadarChart } from 'react-vis';
 import { format } from 'd3-format';

@@ -1,10 +1,13 @@
 const express = require('express');
 const mysql = require('mysql');
 var cors = require('cors')
-
+const passport = require('passport');
+const cookieSession = require('cookie-session');
+require('./passsport-setup');
 
 const routes = require('./routes')
 const config = require('./config.json')
+
 
 const app = express();
 
@@ -26,8 +29,60 @@ app.get('/avg_sci/:choice', routes.avg_sci)
 // 3.4
 app.get('/cat_map/:choice', routes.cat_map)
 
-app.listen(config.server_port, () => {
-    console.log(`Server running at http://${config.server_host}:${config.server_port}/`);
-});
+//cookie-session
+app.use(cookieSession({
+    name: '550project-session',
+    keys: ['key1', 'key2']
+}))
 
-module.exports = app;
+const isLoggedIn = (req, res, next) => {
+    if (req.user) {
+        next();
+    } else {
+        res.sendStatus(401);
+    }
+
+    //initilize passport
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    //oauth2.0-google
+    app.get('/auth/google',
+        passport.authenticate('google', {
+            scope:
+                ['email', 'profile']
+        }
+        ));
+
+    //oauth2.0-google
+    app.get('/auth/google/callback',
+        passport.authenticate('google', {
+            successRedirect: '/auth/google/success',
+            failureRedirect: '/auth/google/failure'
+        }));
+
+    //oath failed
+    app.get('/auth/google/failure', (req, res) => {
+        res.send('Google Authentication failed');
+    });
+
+    //oauth google success
+    app.get('/auth/google/success', isLoggedIn, (req, res) => {
+        res.send('Google Authentication success.\n')
+    });
+
+    //logout
+    app.get('/logout', (req, res) => {
+        req.session = null;
+        req.logout();
+        res.send('Logout success');
+        res.redirect('/');
+    });
+
+
+    app.listen(config.server_port, () => {
+        console.log(`Server running at http://${config.server_host}:${config.server_port}/`);
+    });
+
+    module.exports = app;
+}
