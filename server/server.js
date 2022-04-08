@@ -10,6 +10,16 @@ const app = express();
 
 // whitelist localhost 3000
 app.use(cors({ credentials: true, origin: ['http://localhost:3000'] }));
+
+//1.1 A business search
+app.get('/search/businesses', routes.search_businesses)
+
+//1.1B & 1.2B select a business
+app.get('/business', routes.business)
+
+//1.2 A business recommender
+app.get('/recommend/businesses', routes.recommend_businesses)
+
 //2.1 user login
 app.get('/login', routes.login)
 // 2.2 

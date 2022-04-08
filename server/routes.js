@@ -13,11 +13,167 @@ const connection = mysql.createConnection({
 });
 connection.connect();
 
-
-
 // ********************************************
 //               GENERAL ROUTES
 // ********************************************
+
+// 1.1 A search businesses that meet given criteria
+//http://localhost:8080/search/businesses/?City=Portland&State=OR
+async function search_businesses(req, res) {
+  // TODO: TASK 9: implement and test, potentially writing your own (ungraded) tests
+  // IMPORTANT: in your SQL LIKE matching, use the %query% format to match the search query to substrings, not just the entire string
+  const name = req.query.Name ? req.query.Name : ''
+  const state = req.query.State ? req.query.State : ''
+  const city = req.query.City ? req.query.City : ''
+  const zip = req.query.Zip ? req.query.Zip : ''
+  const category = req.query.Category ? req.query.Category : ''
+  const rlow = req.query.RatingLow ? req.query.RatingLow : 0
+  const rhigh = req.query.RatingHigh ? req.query.RatingHigh : 5
+  const price = req.query.Price ? req.query.Price : 4
+
+  if (req.query.page && !isNaN(req.query.page)) {
+      // This is the case where page is defined.
+      const pagesize = req.query.pagesize ? req.query.pagesize : 10
+      const page = req.query.page
+      connection.query(`SELECT business_id, name, address, city, state, postal_code,
+      stars, review_count, categories,
+      RestaurantsPriceRange2 as price_range
+      FROM Business
+      WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
+          AND categories like '%${category}%'
+          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2 <= ${price}
+      ORDER BY stars DESC, review_count DESC 
+      LIMIT ${pagesize} 
+      OFFSET ${((page-1)*pagesize)}`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+
+  } else {     
+      connection.query(`SELECT business_id, name, address, city, state, postal_code,
+      stars, review_count, categories,
+      RestaurantsPriceRange2 as price_range
+      FROM Business
+      WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
+          AND categories like '%${category}%'
+          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2<=${price}
+      ORDER BY stars DESC, review_count DESC`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+  }
+}
+
+// 1.1B & 1.2B select a business and query detailed info about this business
+//http://localhost:8080/business/?id=_--ScmaNumIoT2gQanACvg
+async function business(req, res) {
+  // TODO: TASK 6: implement and test, potentially writing your own (ungraded) tests
+  if ( req.query.id !== undefined ) {
+      const id = req.query.id
+
+      connection.query(`WITH num_photos (business_id, num_photo) AS
+      (SELECT business_id, count(*) as num_photo from photo
+      WHERE business_id = '${id}')
+      SELECT B.business_id, name, categories,
+          RestaurantsPriceRange2 as price_range, stars, review_count, is_open,
+          Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday,
+          address, city, state, postal_code,
+          RestaurantsTakeOut,
+          garage, lot, street, valet, validated,
+          photo_id, caption, label, num_photo
+      FROM Business B join photo P on B.business_id = P.business_id
+      join num_photos N on P.business_id = N.business_id
+      WHERE B.business_id = '${id}'`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+  } 
+}
+
+
+// 1.2 A recommend businesses based on features of the top-rated businesses in user history
+//http://localhost:8080/recommend/businesses/?UserId=zzYDSfrxsYaydnr8TngD4A&UserName=Nick&State=OR&City=Portland
+async function recommend_businesses(req, res) {
+  // TODO: TASK 9: implement and test, potentially writing your own (ungraded) tests
+  // IMPORTANT: in your SQL LIKE matching, use the %query% format to match the search query to substrings, not just the entire string
+  const userid = req.query.UserId ? req.query.UserId : ''
+  const username = req.query.UserName ? req.query.UserName : ''
+  const state = req.query.State ? req.query.State : ''
+  const city = req.query.City ? req.query.City : ''
+  const zip = req.query.Zip ? req.query.Zip : ''
+
+  if (req.query.page && !isNaN(req.query.page)) {
+      // This is the case where page is defined.
+      const pagesize = req.query.pagesize ? req.query.pagesize : 10
+      const page = req.query.page
+      connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
+      SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
+              substring_index(B.categories, ',', 1) keyword
+      FROM user U join review_Portland R on U.user_id=R.user_id
+      join Business B on R.business_id = B.business_id
+      WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
+      ORDER BY stars DESC
+      LIMIT 5)
+      SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
+              B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
+      FROM Business B join K
+          on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
+          AND FIND_IN_SET(K.keyword, categories)
+      WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
+      ORDER BY B.stars DESC, B.review_count DESC                  
+      LIMIT ${pagesize} 
+      OFFSET ${((page-1)*pagesize)}`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+
+  } else {     
+      connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
+          SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
+                  substring_index(B.categories, ',', 1) keyword
+          FROM user U join review_Portland R on U.user_id=R.user_id
+          join Business B on R.business_id = B.business_id
+          WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
+          ORDER BY stars DESC
+          LIMIT 5)
+          SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
+                  B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
+          FROM Business B join K
+              on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
+              AND FIND_IN_SET(K.keyword, categories)
+          WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
+          ORDER BY B.stars DESC, B.review_count DESC`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+  }
+}
+
 // page 2.1 login function
 //http://localhost:8080/login/?name=Don&uid=0ZxoUw
 async function login(req, res) {
@@ -591,6 +747,9 @@ async function cat_map(req, res) {
 
 }
 module.exports = {
+  search_businesses,
+  business,
+  recommend_businesses,
   login,
   friend_business,
   friend_connection,
