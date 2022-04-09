@@ -91,8 +91,8 @@ async function business(req, res) {
           RestaurantsTakeOut,
           garage, lot, street, valet, validated,
           photo_id, caption, label, num_photo
-      FROM Business B join photo P on B.business_id = P.business_id
-      join num_photos N on P.business_id = N.business_id
+      FROM Business B left join photo P on B.business_id = P.business_id
+      left join num_photos N on P.business_id = N.business_id
       WHERE B.business_id = '${id}'`, 
       function (error, results, fields) {
           if (error) {
@@ -261,14 +261,10 @@ async function friend_business(req, res) {
 
 
 async function friend_connection(req, res) {
-
-
   const ID = req.params.id ? req.params.id : "3dy8So9wPWTYJSsrFvHDMg"
-
   const userID = req.query.userID ? req.query.userID : "Pf7FI0OukC_CEcCz0ZxoUw";
 
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
@@ -528,9 +524,7 @@ async function star_sci(req, res) {
 
 async function price_sci(req, res) {
 
-
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
