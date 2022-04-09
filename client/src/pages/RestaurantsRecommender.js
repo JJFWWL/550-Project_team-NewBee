@@ -294,7 +294,6 @@ const restaurantColumns = [
         ],
         onFilter: (value, record) => record.state === value,
     },
-    // TASK 19: copy over your answers for tasks 7 - 9 to add columns for potential, club, and value
     {
         title:"Stars",
         dataIndex:"stars",
@@ -342,8 +341,8 @@ class RestaurantsRecommender extends React.Component {
             priceQuery: '',
             userNameQuery: '',
             userIdQuery: '',
-            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : 'OPfgKOm_n-ajUo3qjSEgRg',
-            selectedRestaurantDetails: null,
+            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '',
+            selectedRestaurantDetails: [],
             restaurantsResults: []
 
         }
@@ -424,14 +423,13 @@ class RestaurantsRecommender extends React.Component {
     }
 
     componentDidMount() {
-      getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
-          this.setState({restaurantsResults:res.results})
-      })
 
-        // TASK 25: call getRestaurant with the appropriate parameter and set update the correct state variable.
-        // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
+        getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
+            this.setState({restaurantsResults:res.results})
+        })
+
         getRestaurant(this.state.selectedRestaurantId).then(res => {
-            this.setState({selectedRestaurantDetails: res.results[0]})
+            this.setState({selectedRestaurantDetails: res.results})
         })
 
         getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
@@ -533,34 +531,43 @@ class RestaurantsRecommender extends React.Component {
                     </div>
                 <Divider />
 
-                {this.state.selectedRestaurantDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
+                {this.state.selectedRestaurantDetails[0] ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
 
-                <Descriptions title={this.state.selectedRestaurantDetails.name} bordered layout='horizontal'>
-                  <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails.categories}</Descriptions.Item>
-                  <Descriptions.Item label="Price"><Rate character="$" count={4} disabled value={this.state.selectedRestaurantDetails.price_range}/></Descriptions.Item>
-                  <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails.stars}/></Descriptions.Item>
-                  <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails.review_count}</Descriptions.Item>
+                <Descriptions title={this.state.selectedRestaurantDetails[0].name} bordered layout='horizontal'>
+                  <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails[0].categories}</Descriptions.Item>
+                  <Descriptions.Item label="Price"><Rate character="$" count={4} disabled value={this.state.selectedRestaurantDetails[0].price_range}/></Descriptions.Item>
+                  <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails[0].stars}/></Descriptions.Item>
+                  <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails[0].review_count}</Descriptions.Item>
                   <Descriptions.Item label="In Business?">
-                    {this.state.selectedRestaurantDetails.is_open == '1' ? <Badge status="success" text="In Business" /> : <Badge status="error" text="Permanently Closed" />}
+                    {this.state.selectedRestaurantDetails[0].is_open == '1' ? <Badge status="success" text="In Business" /> : <Badge status="error" text="Permanently Closed" />}
                   </Descriptions.Item>
                   <Descriptions.Item label="Today's Hours">
-                  {new Date().getDay() == 1? this.state.selectedRestaurantDetails.Monday:''}
-                  {new Date().getDay() == 2? this.state.selectedRestaurantDetails.Tuesday:''}
-                  {new Date().getDay() == 3? this.state.selectedRestaurantDetails.Wednesday:''}
-                  {new Date().getDay() == 4? this.state.selectedRestaurantDetails.Thursday:''}
-                  {new Date().getDay() == 5? this.state.selectedRestaurantDetails.Friday:''}
-                  {new Date().getDay() == 6? this.state.selectedRestaurantDetails.Saturday:''}
-                  {new Date().getDay() == 7? this.state.selectedRestaurantDetails.Sunday:''}
+                  {new Date().getDay() == 1? this.state.selectedRestaurantDetails[0].Monday:''}
+                  {new Date().getDay() == 2? this.state.selectedRestaurantDetails[0].Tuesday:''}
+                  {new Date().getDay() == 3? this.state.selectedRestaurantDetails[0].Wednesday:''}
+                  {new Date().getDay() == 4? this.state.selectedRestaurantDetails[0].Thursday:''}
+                  {new Date().getDay() == 5? this.state.selectedRestaurantDetails[0].Friday:''}
+                  {new Date().getDay() == 6? this.state.selectedRestaurantDetails[0].Saturday:''}
+                  {new Date().getDay() == 7? this.state.selectedRestaurantDetails[0].Sunday:''}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails.address}, <br/>
-                  {this.state.selectedRestaurantDetails.city}, {this.state.selectedRestaurantDetails.State} {this.state.selectedRestaurantDetails.postal_code}</Descriptions.Item>
+                  <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails[0].address}, <br/>
+                  {this.state.selectedRestaurantDetails[0].city}, {this.state.selectedRestaurantDetails[0].State} {this.state.selectedRestaurantDetails[0].postal_code}</Descriptions.Item>
                 </Descriptions>
 
                 <br/>
                 <Carousel autoplay /*afterChange={onChange}*/>
                   <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
+                    <h3 style={contentStyle}><Image preview={true} src={this.state.selectedRestaurantDetails[0].num_photo? `https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[0].photo_id}.jpg` : 'https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg'} /></h3>
                   </div>
+                  {this.state.selectedRestaurantDetails[0].num_photo > 1? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[1].photo_id}.jpg`} /></h3>
+                  </div>: null}
+                  {this.state.selectedRestaurantDetails[0].num_photo > 2? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[2].photo_id}.jpg`} /></h3>
+                  </div>: null}
+                  {this.state.selectedRestaurantDetails[0].num_photo > 3? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[3].photo_id}.jpg`} /></h3>
+                  </div>: null}
                 </Carousel>
               </div> : null}
               <p style={{textAlign: 'center'}}>CIS550 Project ©2022 Created by Team NewBee</p>
