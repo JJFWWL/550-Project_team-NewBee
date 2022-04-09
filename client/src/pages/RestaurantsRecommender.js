@@ -1,10 +1,9 @@
 import React from 'react';
-import { Form, FormInput, FormGroup, Card, CardBody, CardTitle, Progress } from "shards-react";
+import { Form, FormInput, FormGroup, } from "shards-react";
 
 import {
     Table,
     Pagination,
-    Select,
     Row,
     Col,
     Divider,
@@ -12,7 +11,6 @@ import {
     Rate,
     Button,
     Radio,
-    Menu,
     Cascader,
     BackTop,
     Image,
@@ -26,54 +24,10 @@ import { StarOutlined, DollarOutlined, DollarCircleFilled } from '@ant-design/ic
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
-import { getAllRestaurants, getRestaurantSearch, getRestaurant, getRestaurantRecommendation } from '../fetcher'
+import { getRestaurantSearch, getRestaurant, getRestaurantRecommendation } from '../fetcher'
 const wideFormat = format('.3r');
 
 const { TabPane } = Tabs;
-
-const datasource1 = [
-  {
-    business_id: '1',
-    name: 'Mike\'s Grill',
-    city: 'Portland',
-    State: 'OR',
-    stars: 3.5,
-    review_count: 10,
-    categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
-    RestaurantsPriceRange2: '2',
-    photo_id:'__0nof27AJTcA_es7-1PCw',
-    is_open: 1,
-    postal_code: '02934',
-    address: '12345 Montreal St.',
-    Monday: '7:00-21:00'
-  },
-  {
-    business_id: '2',
-    name: 'John\'s Sushi',
-    city: 'Boston',
-    State: 'MA',
-    stars: 4,
-    review_count: 100,
-    categories: 'Japanese',
-    RestaurantsPriceRange2: '4',
-    photo_id:'__0nof27AJTcA_es7-1PCw'
-  },
-  {
-    business_id: '3',
-    name: 'Peter\'s Bar',
-    city: 'Cambridge',
-    State: 'MA',
-    stars: 4.5,
-    review_count: 100,
-    categories: 'Bars, Nightlife',
-    RestaurantsPriceRange2: '1',
-    photo_id:'__0nof27AJTcA_es7-1PCw',
-    is_open: 1,
-    postal_code: '02452',
-    address: '12345 Montreal St.',
-    Monday: '7:00-21:00'
-  },
-];
 
 const priceOptions = [
   {label: '$', value: '1'},
@@ -322,7 +276,7 @@ const restaurantColumns = [
         dataIndex: 'name',
         key: 'name',
         sorter: (a, b) => a.name.localeCompare(b.name),
-        render: (text, row) => <a href={`/restaurants?id=${row.business_id}`}>{text}</a>
+        render: (text, row) => <a href={`/businesses?id=${row.business_id}`}>{text}</a>
     },
     {
         title: 'City',
@@ -332,13 +286,13 @@ const restaurantColumns = [
     },
     {
         title: 'State',
-        dataIndex: 'State',
-        key: 'State',
+        dataIndex: 'state',
+        key: 'state',
         filters: [
           {text: 'MA', value: 'MA'},
           {text: 'OR', value: 'OR'}
         ],
-        onFilter: (value, record) => record.State === value,
+        onFilter: (value, record) => record.state === value,
     },
     // TASK 19: copy over your answers for tasks 7 - 9 to add columns for potential, club, and value
     {
@@ -360,8 +314,8 @@ const restaurantColumns = [
     },
     {
         title:"Price Level",
-        dataIndex:"RestaurantsPriceRange2",
-        key:"RestaurantsPriceRange2"
+        dataIndex:"price_range",
+        key:"price_range"
     }
 ];
 
@@ -387,29 +341,8 @@ class RestaurantsRecommender extends React.Component {
             priceQuery: '',
             userNameQuery: '',
             userIdQuery: '',
-            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '',
-            selectedRestaurantDetails: {
-              business_id: '1',
-              name: 'Mike\'s Grill',
-              city: 'Portland',
-              State: 'OR',
-              stars: 3.5,
-              review_count: 10,
-              categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
-              price_range: '2',
-              photo_id:'CCbMJ0qYlYAB3GJ8DA-pFg',
-              is_open: 1,
-              postal_code: '02934',
-              address: '12345 Montreal St.',
-              Monday: '4:00 PM - 1:00 AM',
-              Tuesday:'4:00 PM - 2:00 AM',
-              Wednesday: '4:00 PM - 3:00 AM',
-              Thursday: '4:00 PM - 4:00 AM',
-              Fridat: '4:00 PM - 5:00 AM',
-              Saturday: '4:00 PM - 6:00 AM',
-              Sunday:'4:00 PM - 7:00 AM'
-            },
-            selectedRestaurantPhotos: ['UFXViemulVHRNdQsJNkE4g', 'sM3i6QTGI2_ZCXBHKwNZCA'],
+            selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : 'OPfgKOm_n-ajUo3qjSEgRg',
+            selectedRestaurantDetails: null,
             restaurantsResults: []
 
         }
@@ -497,15 +430,15 @@ class RestaurantsRecommender extends React.Component {
         // TASK 25: call getRestaurant with the appropriate parameter and set update the correct state variable.
         // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
         getRestaurant(this.state.selectedRestaurantId).then(res => {
-
-            this.setState({selectedRestaurantDetails: res.results[0],
-            selectedRestaurantPhotos: [res.results[0].photo_id, res.results[1].photo_id, res.results[2].photo_id, res.results[3].photo_id]})
+            this.setState({selectedRestaurantDetails: res.results[0]})
         })
 
         getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
             this.setState({restaurantsResults:res.results})
         })
     }
+
+
 
     render() {
         return (
@@ -594,8 +527,8 @@ class RestaurantsRecommender extends React.Component {
                 </Tabs>
                 <Divider />
                     <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                    <h3>Restaurants{this.state.selectedRestaurantId}</h3>
-                    <Table dataSource={datasource1/*this.state.restaurantsResults*/} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
+                    <h3>Restaurants</h3>
+                    <Table dataSource={this.state.restaurantsResults} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
                     </div>
                 <Divider />
 
@@ -625,17 +558,8 @@ class RestaurantsRecommender extends React.Component {
                 <br/>
                 <Carousel autoplay /*afterChange={onChange}*/>
                   <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[0]}.jpg`} /></h3>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails.photo_id}.jpg`} /></h3>
                   </div>
-                  { this.state.selectedRestaurantPhotos[1] ? <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[1]}.jpg`} /></h3>
-                  </div> : null }
-                  { this.state.selectedRestaurantPhotos[2] ? <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[2]}.jpg`} /></h3>
-                  </div> : null }
-                  { this.state.selectedRestaurantPhotos[3] ? <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[3]}.jpg`} /></h3>
-                  </div> : null }
                 </Carousel>
               </div> : null}
               <p style={{textAlign: 'center'}}>CIS550 Project ©2022 Created by Team NewBee</p>
