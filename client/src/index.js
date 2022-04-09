@@ -30,7 +30,7 @@ ReactDOM.render(
 						<FriendPage />
 					)} />
 				<Route exact
-					path="/restaurants"
+					path="/businesses"
 					render={() => (
 						<RestaurantsRecommender />
 					)} />
