@@ -302,10 +302,10 @@ const restaurantColumns = [
         sorter: (a, b) => a.stars - b.stars
     },
     {
-        title:"Review Count",
-        dataIndex:"review_count",
-        key:"review_count",
-        sorter: (a, b) => a.review_count - b.review_count
+        title:"Price Level",
+        dataIndex:"price_range",
+        key:"price_range",
+        sorter: (a, b) => a.price_range - b.price_range
     },
     {
         title:"Categories",
@@ -313,9 +313,10 @@ const restaurantColumns = [
         key:"categories"
     },
     {
-        title:"Price Level",
-        dataIndex:"price_range",
-        key:"price_range"
+        title:"Review Count",
+        dataIndex:"review_count",
+        key:"review_count",
+        sorter: (a, b) => a.review_count - b.review_count
     }
 ];
 
