@@ -29,7 +29,7 @@ async function search_businesses(req, res) {
   const category = req.query.Category ? req.query.Category : ''
   const rlow = req.query.RatingLow ? req.query.RatingLow : 0
   const rhigh = req.query.RatingHigh ? req.query.RatingHigh : 5
-  const price = req.query.Price ? req.query.Price : 4
+  const price = req.query.Price ? `AND RestaurantsPriceRange2 = ${req.query.Price}` : ''
 
   if (req.query.page && !isNaN(req.query.page)) {
       // This is the case where page is defined.
@@ -41,7 +41,7 @@ async function search_businesses(req, res) {
       FROM Business
       WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
           AND categories like '%${category}%'
-          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2 <= ${price}
+          AND stars>= ${rlow} AND stars<=${rhigh} ${price}
       ORDER BY stars DESC, review_count DESC 
       LIMIT ${pagesize} 
       OFFSET ${((page-1)*pagesize)}`, 
@@ -61,7 +61,7 @@ async function search_businesses(req, res) {
       FROM Business
       WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
           AND categories like '%${category}%'
-          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2<=${price}
+          AND stars>= ${rlow} AND stars<=${rhigh} ${price}
       ORDER BY stars DESC, review_count DESC`, 
       function (error, results, fields) {
           if (error) {
@@ -91,8 +91,8 @@ async function business(req, res) {
           RestaurantsTakeOut,
           garage, lot, street, valet, validated,
           photo_id, caption, label, num_photo
-      FROM Business B join photo P on B.business_id = P.business_id
-      join num_photos N on P.business_id = N.business_id
+      FROM Business B left join photo P on B.business_id = P.business_id
+      left join num_photos N on P.business_id = N.business_id
       WHERE B.business_id = '${id}'`, 
       function (error, results, fields) {
           if (error) {
@@ -124,7 +124,7 @@ async function recommend_businesses(req, res) {
       connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
       SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
               substring_index(B.categories, ',', 1) keyword
-      FROM user U join review_Portland R on U.user_id=R.user_id
+      FROM user U join review R on U.user_id=R.user_id
       join Business B on R.business_id = B.business_id
       WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
       ORDER BY stars DESC
@@ -132,8 +132,8 @@ async function recommend_businesses(req, res) {
       SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
               B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
       FROM Business B join K
-          on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
-          AND FIND_IN_SET(K.keyword, categories)
+          on B.RestaurantsPriceRange2 = K.price_range 
+          AND B.stars>=4 AND FIND_IN_SET(K.keyword, categories)
       WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
       ORDER BY B.stars DESC, B.review_count DESC                  
       LIMIT ${pagesize} 
@@ -151,7 +151,7 @@ async function recommend_businesses(req, res) {
       connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
           SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
                   substring_index(B.categories, ',', 1) keyword
-          FROM user U join review_Portland R on U.user_id=R.user_id
+          FROM user U join review R on U.user_id=R.user_id
           join Business B on R.business_id = B.business_id
           WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
           ORDER BY stars DESC
@@ -159,8 +159,8 @@ async function recommend_businesses(req, res) {
           SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
                   B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
           FROM Business B join K
-              on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
-              AND FIND_IN_SET(K.keyword, categories)
+              on B.RestaurantsPriceRange2 = K.price_range 
+              AND B.stars>=4 AND FIND_IN_SET(K.keyword, categories)
           WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
           ORDER BY B.stars DESC, B.review_count DESC`, 
       function (error, results, fields) {
@@ -261,14 +261,10 @@ async function friend_business(req, res) {
 
 
 async function friend_connection(req, res) {
-
-
   const ID = req.params.id ? req.params.id : "3dy8So9wPWTYJSsrFvHDMg"
-
   const userID = req.query.userID ? req.query.userID : "Pf7FI0OukC_CEcCz0ZxoUw";
 
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
@@ -528,9 +524,7 @@ async function star_sci(req, res) {
 
 async function price_sci(req, res) {
 
-
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
