@@ -18,9 +18,10 @@ import {
     Badge,
     Carousel,
     Tabs,
+    Popover,
     notification,
 } from 'antd'
-import { StarOutlined, DollarOutlined, DollarCircleFilled } from '@ant-design/icons';
+import { StarOutlined, DollarOutlined, DollarCircleFilled, CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
@@ -270,54 +271,7 @@ const locationOptions = [
 
 ]
 
-const restaurantColumns = [
-    {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        sorter: (a, b) => a.name.localeCompare(b.name),
-        render: (text, row) => <a href={`/businesses?id=${row.business_id}`}>{text}</a>
-    },
-    {
-        title: 'City',
-        dataIndex: 'city',
-        key: 'city',
-        sorter: (a, b) => a.city.localeCompare(b.city)
-    },
-    {
-        title: 'State',
-        dataIndex: 'state',
-        key: 'state',
-        filters: [
-          {text: 'MA', value: 'MA'},
-          {text: 'OR', value: 'OR'}
-        ],
-        onFilter: (value, record) => record.state === value,
-    },
-    {
-        title:"Stars",
-        dataIndex:"stars",
-        key:"stars",
-        sorter: (a, b) => a.stars - b.stars
-    },
-    {
-        title:"Price Level",
-        dataIndex:"price_range",
-        key:"price_range",
-        sorter: (a, b) => a.price_range - b.price_range
-    },
-    {
-        title:"Categories",
-        dataIndex:"categories",
-        key:"categories"
-    },
-    {
-        title:"Review Count",
-        dataIndex:"review_count",
-        key:"review_count",
-        sorter: (a, b) => a.review_count - b.review_count
-    }
-];
+const restaurantColumns = '';
 
 const contentStyle = {
 
@@ -343,8 +297,8 @@ class RestaurantsRecommender extends React.Component {
             userIdQuery: '',
             selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '',
             selectedRestaurantDetails: [],
-            restaurantsResults: []
-
+            restaurantsResults: [],
+            loadings: [],
         }
 
 
@@ -361,9 +315,30 @@ class RestaurantsRecommender extends React.Component {
         this.handleUserIdQueryChange = this.handleUserIdQueryChange.bind(this)
         this.updateRecommendResults = this.updateRecommendResults.bind(this)
 
+        this.handleRestaurantIdChange = this.handleRestaurantIdChange.bind(this)
+        this.updateRestaurantDetails = this.updateRestaurantDetails.bind(this)
     }
 
+    enterLoading = index => {
+      this.setState(({ loadings }) => {
+        const newLoadings = [...loadings];
+        newLoadings[index] = true;
 
+        return {
+          loadings: newLoadings,
+        };
+      });
+      setTimeout(() => {
+        this.setState(({ loadings }) => {
+          const newLoadings = [...loadings];
+          newLoadings[index] = false;
+
+          return {
+            loadings: newLoadings,
+          };
+        });
+      }, 30000);
+    };
 
     handleNameQueryChange(event) {
         this.setState({ nameQuery: event.target.value })
@@ -393,7 +368,13 @@ class RestaurantsRecommender extends React.Component {
 
     updateSearchResults() {
         getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
+            console.log("results returned! now loading results to variable...")
             this.setState({restaurantsResults:res.results})
+            console.log("results loaded to variable!")
+            this.setState({loadings: [false, false]})
+            if (this.state.restaurantsResults.length==0) {
+              notification.info({message: "No results found!"})
+            }
         })
     }
 
@@ -406,6 +387,8 @@ class RestaurantsRecommender extends React.Component {
       this.setState({ ratingHighQuery: 5 })
       this.setState({ ratingLowQuery: 1 })
       this.setState({ priceQuery: '' })
+      this.setState({ userNameQuery: '' })
+      this.setState({ userIdQuery: '' })
     }
 
     handleUserNameQueryChange(event) {
@@ -417,29 +400,44 @@ class RestaurantsRecommender extends React.Component {
     }
 
     updateRecommendResults() {
+
         getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
+            console.log("results returned! now loading results to variable...")
             this.setState({restaurantsResults:res.results})
+            console.log("results loaded to variable!")
+            this.setState({loadings: [false, false]})
+            if (this.state.restaurantsResults.length==0) {
+              notification.info({message: "No results found!"})
+            }
         })
+    }
+
+    handleRestaurantIdChange(value) {
+        this.setState({ selectedRestaurantId: value })
+    }
+
+    updateRestaurantDetails() {
+      getRestaurant(this.state.selectedRestaurantId).then(res => {
+          this.setState({selectedRestaurantDetails: res.results})
+          console.log("Wow, this Get Restaurant is automatic!")
+      })
     }
 
     componentDidMount() {
 
-        getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
-            this.setState({restaurantsResults:res.results})
-        })
 
         getRestaurant(this.state.selectedRestaurantId).then(res => {
             this.setState({selectedRestaurantDetails: res.results})
+            console.log("Wow, this Get Restaurant is automatic!")
         })
 
-        getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
-            this.setState({restaurantsResults:res.results})
-        })
+
     }
 
 
 
     render() {
+        const { loadings } = this.state;
         return (
 
             <div>
@@ -452,7 +450,7 @@ class RestaurantsRecommender extends React.Component {
                         <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
                             <Row>
                                 <Col flex={2}><FormGroup style={{ width: '25vw', margin: '0 auto' }}>
-                                    <label>Restaurant</label>
+                                    <label>Business</label>
                                     <FormInput placeholder={this.state.nameQuery? this.state.nameQuery : 'e.g. Bradley\'s Bar & Grill'} value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
                                 </FormGroup></Col>
                                 <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
@@ -484,7 +482,7 @@ class RestaurantsRecommender extends React.Component {
                                     <Radio.Group options={priceOptions} value={this.state.priceQuery} onChange={this.handlePriceChange} optionType="button"/>
                                 </FormGroup></Col>
                                 <Col flex={2}>
-                                    <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery ? this.updateSearchResults : ()=>notification.error({message: 'Please select the location!'})}>Search</Button>
+                                    <Button style={{ marginTop: '4vh' }} type="primary" onClick={()=>{if (this.state.stateQuery) { this.enterLoading(0);  this.updateSearchResults(); } else {notification.error({message: 'Please select the location!'})}}} loading={loadings[0]}>Search</Button>
                                     &nbsp;
                                     <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
                                 </Col>
@@ -516,7 +514,7 @@ class RestaurantsRecommender extends React.Component {
                                   <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
                               </FormGroup></Col>
                               <Col flex={2}>
-                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery!='' && this.state.userIdQuery!='' && this.state.userNameQuery!='' ? this.updateRecommendResults : ()=>notification.error({message: 'Name, ID, and Location are required for recommendation!'})}>Recommend</Button>
+                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={()=>{if (this.state.stateQuery!='' && this.state.userIdQuery!='' && this.state.userNameQuery!='') {this.enterLoading(1); this.updateRecommendResults(); } else { notification.error({message: 'Name, ID, and Location are required for recommendation!'})}}} loading={loadings[1]}>Recommend</Button>
                                   &nbsp;
                                   <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
                               </Col>
@@ -526,8 +524,59 @@ class RestaurantsRecommender extends React.Component {
                 </Tabs>
                 <Divider />
                     <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                    <h3>Restaurants</h3>
-                    <Table dataSource={this.state.restaurantsResults} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
+                    <h3>Businesses</h3>
+                    <Table dataSource={this.state.restaurantsResults} columns={[
+                        {
+                            title: 'Name',
+                            dataIndex: 'name',
+                            key: 'name',
+                            sorter: (a, b) => a.name.localeCompare(b.name),
+                            render: (text, row) => <Popover content="Double click to show details" trigger="hover"><button onClick={()=>{this.handleRestaurantIdChange(row.business_id); console.log("business_id loaded! Now searching..."); this.updateRestaurantDetails();}}>{text}</button></Popover>
+                        },
+                        {
+                            title: 'City',
+                            dataIndex: 'city',
+                            key: 'city',
+                            sorter: (a, b) => a.city.localeCompare(b.city)
+                        },
+                        {
+                            title: 'State',
+                            dataIndex: 'state',
+                            key: 'state',
+                            filters: [
+                              {text: 'MA', value: 'MA'},
+                              {text: 'OR', value: 'OR'}
+                            ],
+                            onFilter: (value, record) => record.state === value,
+                        },
+                        {
+                            title:"Rating",
+                            dataIndex:"stars",
+                            key:"stars",
+                            sorter: (a, b) => a.stars - b.stars,
+                            render: (text) => <Rate allowHalf disabled value={text} style={{fontSize: 15}}/>,
+                            width: 140
+                        },
+                        {
+                            title:"Price",
+                            dataIndex:"price_range",
+                            key:"price_range",
+                            sorter: (a, b) => a.price_range - b.price_range,
+                            render: (text) => <Rate character={<DollarOutlined/>} count={4} disabled value={text} style={{fontSize: 15, color: "black"}}/>,
+                            width: 120
+                        },
+                        {
+                            title:"Categories",
+                            dataIndex:"categories",
+                            key:"categories"
+                        },
+                        {
+                            title:"Review Count",
+                            dataIndex:"review_count",
+                            key:"review_count",
+                            sorter: (a, b) => a.review_count - b.review_count
+                        },
+                    ]} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
                     </div>
                 <Divider />
 
@@ -535,7 +584,7 @@ class RestaurantsRecommender extends React.Component {
 
                 <Descriptions title={this.state.selectedRestaurantDetails[0].name} bordered layout='horizontal'>
                   <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails[0].categories}</Descriptions.Item>
-                  <Descriptions.Item label="Price"><Rate character="$" count={4} disabled value={this.state.selectedRestaurantDetails[0].price_range}/></Descriptions.Item>
+                  <Descriptions.Item label="Price"><Rate character={<DollarOutlined/>} style={{color: "black"}} count={4} disabled value={this.state.selectedRestaurantDetails[0].price_range}/></Descriptions.Item>
                   <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails[0].stars}/></Descriptions.Item>
                   <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails[0].review_count}</Descriptions.Item>
                   <Descriptions.Item label="In Business?">
