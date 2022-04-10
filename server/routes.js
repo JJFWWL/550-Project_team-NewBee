@@ -29,7 +29,7 @@ async function search_businesses(req, res) {
   const category = req.query.Category ? req.query.Category : ''
   const rlow = req.query.RatingLow ? req.query.RatingLow : 0
   const rhigh = req.query.RatingHigh ? req.query.RatingHigh : 5
-  const price = req.query.Price ? req.query.Price : 4
+  const price = req.query.Price ? `AND RestaurantsPriceRange2 = ${req.query.Price}` : ''
 
   if (req.query.page && !isNaN(req.query.page)) {
       // This is the case where page is defined.
@@ -41,7 +41,7 @@ async function search_businesses(req, res) {
       FROM Business
       WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
           AND categories like '%${category}%'
-          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2 <= ${price}
+          AND stars>= ${rlow} AND stars<=${rhigh} ${price}
       ORDER BY stars DESC, review_count DESC 
       LIMIT ${pagesize} 
       OFFSET ${((page-1)*pagesize)}`, 
@@ -61,7 +61,7 @@ async function search_businesses(req, res) {
       FROM Business
       WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
           AND categories like '%${category}%'
-          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2<=${price}
+          AND stars>= ${rlow} AND stars<=${rhigh} ${price}
       ORDER BY stars DESC, review_count DESC`, 
       function (error, results, fields) {
           if (error) {
