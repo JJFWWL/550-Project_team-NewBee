@@ -407,7 +407,7 @@ class RestaurantsRecommender extends React.Component {
             console.log("results loaded to variable!")
             this.setState({loadings: [false, false]})
             if (this.state.restaurantsResults.length==0) {
-              notification.info({message: "No results found!"})
+              notification.info({message: "No results found! Please verify your name and ID."})
             }
         })
     }
