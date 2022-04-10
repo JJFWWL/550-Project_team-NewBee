@@ -514,8 +514,8 @@ class RestaurantsRecommender extends React.Component {
                         </Form>
                     </TabPane>
                 </Tabs>
-                <Divider />
-                    <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
+                    {this.state.restaurantsResults.length != 0? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
+                    <Divider />
                     <h3>Businesses</h3>
                     <Table dataSource={this.state.restaurantsResults} columns={[
                         {
@@ -569,11 +569,11 @@ class RestaurantsRecommender extends React.Component {
                             sorter: (a, b) => a.review_count - b.review_count
                         },
                     ]} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
-                    </div>
-                <Divider />
+                    </div>:null}
 
                 {this.state.selectedRestaurantDetails[0] ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
 
+                <Divider />
                 <Descriptions title={this.state.selectedRestaurantDetails[0].name} bordered layout='horizontal'>
                   <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails[0].categories}</Descriptions.Item>
                   <Descriptions.Item label="Price"><Rate character={<DollarOutlined/>} style={{color: "black"}} count={4} disabled value={this.state.selectedRestaurantDetails[0].price_range}/></Descriptions.Item>
@@ -611,7 +611,7 @@ class RestaurantsRecommender extends React.Component {
                   </div>: null}
                 </Carousel>
               </div> : null}
-              <p style={{textAlign: 'center'}}>CIS550 Project ©2022 Created by Team NewBee</p>
+              <footer><br/><br/><br/><p style={{textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', backgroundColor:'#041527', color:'white'}}>CIS550 Project ©2022 Created by Team NewBee</p></footer>
               <BackTop/>
             </div>
 
