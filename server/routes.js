@@ -13,6 +13,7 @@ const connection = mysql.createConnection({
 });
 connection.connect();
 
+
 // ********************************************
 //               GENERAL ROUTES
 // ********************************************
@@ -738,8 +739,115 @@ async function cat_map(req, res) {
       }
     }
   );
-
 }
+
+// 3.5 County Health Rankings and price/star frequency distributions
+//http://localhost:8080/health_ranking_businesses_stats/?State=OR
+async function county_health_businesses(req, res) {
+
+  const state = req.query.State ? req.query.State : ''
+ 
+  if (req.query.page && !isNaN(req.query.page)) {
+      // This is the case where page is defined.
+      const pagesize = req.query.pagesize ? req.query.pagesize : 10
+      const page = req.query.page
+
+      connection.query(`WITH H (business_id, price_range, stars,
+          zip, city, state, fips, county, num_ranked_counties,
+          health_factors_rank) AS
+          (SELECT B.business_id, RestaurantsPriceRange2, stars,
+          B.postal_code, B.city, B.state, R.fips, R.county, R.number_of_ranked_counties,
+          R.health_factors_rank
+      FROM BusinessFull B join Zip_county_crosswalk Z
+          on B.postal_code = Z.zip AND B.city = Z.city AND B.state = Z.state
+          join County_health_ranking R on Z.fips = R.fips
+          WHERE B.state like '%${state}%')
+      SELECT H.state, H.num_ranked_counties, H.fips, H.county, H.health_factors_rank,
+            SUM(IF(H.price_range = 1, 1, 0)) as price1_count,
+            SUM(IF(H.price_range = 2, 1, 0)) as price2_count,
+            SUM(IF(H.price_range = 3, 1, 0)) as price3_count,
+            SUM(IF(H.price_range = 4, 1, 0)) as price4_count,
+            SUM(IF(H.price_range >0, 1, 0)) as price_count,
+            SUM(IF(H.price_range = 1, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price1_pct,
+            SUM(IF(H.price_range = 2, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price2_pct,
+            SUM(IF(H.price_range = 3, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price3_pct,
+            SUM(IF(H.price_range = 4, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price4_pct,
+            SUM(IF(H.stars <= 1, 1, 0)) as star0_1_count,
+            SUM(IF(H.stars>1 AND stars<=2, 1, 0)) as star1_2_count,
+            SUM(IF(H.stars>2 AND stars<=3, 1, 0)) as star2_3_count,
+            SUM(IF(H.stars>3 AND stars<=4, 1, 0)) as star3_4_count,
+            SUM(IF(H.stars>4 AND stars<=5, 1, 0)) as star4_5_count,
+            SUM(IF(H.stars >0, 1, 0)) as star_count,
+            SUM(IF(H.stars <= 1, 1, 0))/SUM(IF(H.stars >0, 1, 0)) as star0_1_pct,
+            SUM(IF(H.stars>1 AND stars<=2, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star1_2_pct,
+            SUM(IF(H.stars>2 AND stars<=3, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star2_3_pct,
+            SUM(IF(H.stars>3 AND stars<=4, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star3_4_pct,
+            SUM(IF(H.stars>4 AND stars<=5, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star4_5_pct
+      FROM H
+      GROUP BY H.state, H.fips, H.county, H.health_factors_rank
+      having count(H.business_id)>=10
+      ORDER BY H.state, H.health_factors_rank
+      LIMIT ${pagesize} 
+      OFFSET ${((page-1)*pagesize)}`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+
+  } else {     
+      connection.query(`WITH H (business_id, price_range, stars,
+        zip, city, state, fips, county, num_ranked_counties,
+        health_factors_rank) AS
+        (SELECT B.business_id, RestaurantsPriceRange2, stars,
+        B.postal_code, B.city, B.state, R.fips, R.county, R.number_of_ranked_counties,
+        R.health_factors_rank
+    FROM BusinessFull B join Zip_county_crosswalk Z
+        on B.postal_code = Z.zip AND B.city = Z.city AND B.state = Z.state
+        join County_health_ranking R on Z.fips = R.fips
+        WHERE B.state like '%${state}%')
+    SELECT H.state, H.num_ranked_counties, H.fips, H.county, H.health_factors_rank,
+           SUM(IF(H.price_range = 1, 1, 0)) as price1_count,
+           SUM(IF(H.price_range = 2, 1, 0)) as price2_count,
+           SUM(IF(H.price_range = 3, 1, 0)) as price3_count,
+           SUM(IF(H.price_range = 4, 1, 0)) as price4_count,
+           SUM(IF(H.price_range >0, 1, 0)) as price_count,
+           SUM(IF(H.price_range = 1, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price1_pct,
+           SUM(IF(H.price_range = 2, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price2_pct,
+           SUM(IF(H.price_range = 3, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price3_pct,
+           SUM(IF(H.price_range = 4, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price4_pct,
+           SUM(IF(H.stars <= 1, 1, 0)) as star0_1_count,
+           SUM(IF(H.stars>1 AND stars<=2, 1, 0)) as star1_2_count,
+           SUM(IF(H.stars>2 AND stars<=3, 1, 0)) as star2_3_count,
+           SUM(IF(H.stars>3 AND stars<=4, 1, 0)) as star3_4_count,
+           SUM(IF(H.stars>4 AND stars<=5, 1, 0)) as star4_5_count,
+           SUM(IF(H.stars >0, 1, 0)) as star_count,
+           SUM(IF(H.stars <= 1, 1, 0))/SUM(IF(H.stars >0, 1, 0)) as star0_1_pct,
+           SUM(IF(H.stars>1 AND stars<=2, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star1_2_pct,
+           SUM(IF(H.stars>2 AND stars<=3, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star2_3_pct,
+           SUM(IF(H.stars>3 AND stars<=4, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star3_4_pct,
+           SUM(IF(H.stars>4 AND stars<=5, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star4_5_pct
+    FROM H
+    GROUP BY H.state, H.fips, H.county, H.health_factors_rank
+    having count(H.business_id)>=10
+    ORDER BY H.state, H.health_factors_rank`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+  }
+}
+
+
+
+
 module.exports = {
   search_businesses,
   business,
@@ -751,4 +859,5 @@ module.exports = {
   price_sci,
   avg_sci,
   cat_map,
+  county_health_businesses
 }
