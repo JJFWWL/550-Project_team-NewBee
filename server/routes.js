@@ -124,7 +124,7 @@ async function recommend_businesses(req, res) {
       connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
       SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
               substring_index(B.categories, ',', 1) keyword
-      FROM user U join review_Portland R on U.user_id=R.user_id
+      FROM user U join review R on U.user_id=R.user_id
       join Business B on R.business_id = B.business_id
       WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
       ORDER BY stars DESC
@@ -132,8 +132,8 @@ async function recommend_businesses(req, res) {
       SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
               B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
       FROM Business B join K
-          on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
-          AND FIND_IN_SET(K.keyword, categories)
+          on B.RestaurantsPriceRange2 = K.price_range 
+          AND B.stars>=4 AND FIND_IN_SET(K.keyword, categories)
       WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
       ORDER BY B.stars DESC, B.review_count DESC                  
       LIMIT ${pagesize} 
@@ -151,7 +151,7 @@ async function recommend_businesses(req, res) {
       connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
           SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
                   substring_index(B.categories, ',', 1) keyword
-          FROM user U join review_Portland R on U.user_id=R.user_id
+          FROM user U join review R on U.user_id=R.user_id
           join Business B on R.business_id = B.business_id
           WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
           ORDER BY stars DESC
@@ -159,8 +159,8 @@ async function recommend_businesses(req, res) {
           SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
                   B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
           FROM Business B join K
-              on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
-              AND FIND_IN_SET(K.keyword, categories)
+              on B.RestaurantsPriceRange2 = K.price_range 
+              AND B.stars>=4 AND FIND_IN_SET(K.keyword, categories)
           WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
           ORDER BY B.stars DESC, B.review_count DESC`, 
       function (error, results, fields) {
