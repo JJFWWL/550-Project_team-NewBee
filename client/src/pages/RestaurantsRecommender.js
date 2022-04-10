@@ -424,14 +424,6 @@ class RestaurantsRecommender extends React.Component {
     }
 
     componentDidMount() {
-
-
-        getRestaurant(this.state.selectedRestaurantId).then(res => {
-            this.setState({selectedRestaurantDetails: res.results})
-            console.log("Wow, this Get Restaurant is automatic!")
-        })
-
-
     }
 
 
