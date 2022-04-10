@@ -1,10 +1,9 @@
 import React from 'react';
-import { Form, FormInput, FormGroup, Card, CardBody, CardTitle, Progress } from "shards-react";
+import { Form, FormInput, FormGroup, } from "shards-react";
 
 import {
     Table,
     Pagination,
-    Select,
     Row,
     Col,
     Divider,
@@ -12,7 +11,6 @@ import {
     Rate,
     Button,
     Radio,
-    Menu,
     Cascader,
     BackTop,
     Image,
@@ -20,60 +18,17 @@ import {
     Badge,
     Carousel,
     Tabs,
+    Popover,
     notification,
 } from 'antd'
-import { StarOutlined, DollarOutlined, DollarCircleFilled } from '@ant-design/icons';
+import { StarOutlined, DollarOutlined, DollarCircleFilled, CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
-import { getAllRestaurants, getRestaurantSearch, getRestaurant, getRestaurantRecommendation } from '../fetcher'
+import { getRestaurantSearch, getRestaurant, getRestaurantRecommendation } from '../fetcher'
 const wideFormat = format('.3r');
 
 const { TabPane } = Tabs;
-
-const datasource1 = [
-  {
-    business_id: '1',
-    name: 'Mike\'s Grill',
-    city: 'Portland',
-    State: 'OR',
-    stars: 3.5,
-    review_count: 10,
-    categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
-    RestaurantsPriceRange2: '2',
-    photo_id:'__0nof27AJTcA_es7-1PCw',
-    is_open: 1,
-    postal_code: '02934',
-    address: '12345 Montreal St.',
-    Monday: '7:00-21:00'
-  },
-  {
-    business_id: '2',
-    name: 'John\'s Sushi',
-    city: 'Boston',
-    State: 'MA',
-    stars: 4,
-    review_count: 100,
-    categories: 'Japanese',
-    RestaurantsPriceRange2: '4',
-    photo_id:'__0nof27AJTcA_es7-1PCw'
-  },
-  {
-    business_id: '3',
-    name: 'Peter\'s Bar',
-    city: 'Cambridge',
-    State: 'MA',
-    stars: 4.5,
-    review_count: 100,
-    categories: 'Bars, Nightlife',
-    RestaurantsPriceRange2: '1',
-    photo_id:'__0nof27AJTcA_es7-1PCw',
-    is_open: 1,
-    postal_code: '02452',
-    address: '12345 Montreal St.',
-    Monday: '7:00-21:00'
-  },
-];
 
 const priceOptions = [
   {label: '$', value: '1'},
@@ -316,54 +271,7 @@ const locationOptions = [
 
 ]
 
-const restaurantColumns = [
-    {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        sorter: (a, b) => a.name.localeCompare(b.name),
-        render: (text, row) => <a href={`/restaurants?id=${row.business_id}`}>{text}</a>
-    },
-    {
-        title: 'City',
-        dataIndex: 'city',
-        key: 'city',
-        sorter: (a, b) => a.city.localeCompare(b.city)
-    },
-    {
-        title: 'State',
-        dataIndex: 'State',
-        key: 'State',
-        filters: [
-          {text: 'MA', value: 'MA'},
-          {text: 'OR', value: 'OR'}
-        ],
-        onFilter: (value, record) => record.State === value,
-    },
-    // TASK 19: copy over your answers for tasks 7 - 9 to add columns for potential, club, and value
-    {
-        title:"Stars",
-        dataIndex:"stars",
-        key:"stars",
-        sorter: (a, b) => a.stars - b.stars
-    },
-    {
-        title:"Review Count",
-        dataIndex:"review_count",
-        key:"review_count",
-        sorter: (a, b) => a.review_count - b.review_count
-    },
-    {
-        title:"Categories",
-        dataIndex:"categories",
-        key:"categories"
-    },
-    {
-        title:"Price Level",
-        dataIndex:"RestaurantsPriceRange2",
-        key:"RestaurantsPriceRange2"
-    }
-];
+const restaurantColumns = '';
 
 const contentStyle = {
 
@@ -388,30 +296,9 @@ class RestaurantsRecommender extends React.Component {
             userNameQuery: '',
             userIdQuery: '',
             selectedRestaurantId: window.location.search ? window.location.search.substring(1).split('=')[1] : '',
-            selectedRestaurantDetails: {
-              business_id: '1',
-              name: 'Mike\'s Grill',
-              city: 'Portland',
-              State: 'OR',
-              stars: 3.5,
-              review_count: 10,
-              categories: 'American (Traditional), Bars, Nightlife, Breakfast & Brunch, Restaurants',
-              price_range: '2',
-              photo_id:'CCbMJ0qYlYAB3GJ8DA-pFg',
-              is_open: 1,
-              postal_code: '02934',
-              address: '12345 Montreal St.',
-              Monday: '4:00 PM - 1:00 AM',
-              Tuesday:'4:00 PM - 2:00 AM',
-              Wednesday: '4:00 PM - 3:00 AM',
-              Thursday: '4:00 PM - 4:00 AM',
-              Fridat: '4:00 PM - 5:00 AM',
-              Saturday: '4:00 PM - 6:00 AM',
-              Sunday:'4:00 PM - 7:00 AM'
-            },
-            selectedRestaurantPhotos: ['UFXViemulVHRNdQsJNkE4g', 'sM3i6QTGI2_ZCXBHKwNZCA'],
-            restaurantsResults: []
-
+            selectedRestaurantDetails: [],
+            restaurantsResults: [],
+            loadings: [],
         }
 
 
@@ -428,9 +315,30 @@ class RestaurantsRecommender extends React.Component {
         this.handleUserIdQueryChange = this.handleUserIdQueryChange.bind(this)
         this.updateRecommendResults = this.updateRecommendResults.bind(this)
 
+        this.handleRestaurantIdChange = this.handleRestaurantIdChange.bind(this)
+        this.updateRestaurantDetails = this.updateRestaurantDetails.bind(this)
     }
 
+    enterLoading = index => {
+      this.setState(({ loadings }) => {
+        const newLoadings = [...loadings];
+        newLoadings[index] = true;
 
+        return {
+          loadings: newLoadings,
+        };
+      });
+      setTimeout(() => {
+        this.setState(({ loadings }) => {
+          const newLoadings = [...loadings];
+          newLoadings[index] = false;
+
+          return {
+            loadings: newLoadings,
+          };
+        });
+      }, 30000);
+    };
 
     handleNameQueryChange(event) {
         this.setState({ nameQuery: event.target.value })
@@ -460,7 +368,13 @@ class RestaurantsRecommender extends React.Component {
 
     updateSearchResults() {
         getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
+            console.log("results returned! now loading results to variable...")
             this.setState({restaurantsResults:res.results})
+            console.log("results loaded to variable!")
+            this.setState({loadings: [false, false]})
+            if (this.state.restaurantsResults.length==0) {
+              notification.info({message: "No results found!"})
+            }
         })
     }
 
@@ -473,6 +387,8 @@ class RestaurantsRecommender extends React.Component {
       this.setState({ ratingHighQuery: 5 })
       this.setState({ ratingLowQuery: 1 })
       this.setState({ priceQuery: '' })
+      this.setState({ userNameQuery: '' })
+      this.setState({ userIdQuery: '' })
     }
 
     handleUserNameQueryChange(event) {
@@ -484,30 +400,36 @@ class RestaurantsRecommender extends React.Component {
     }
 
     updateRecommendResults() {
+
         getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
+            console.log("results returned! now loading results to variable...")
             this.setState({restaurantsResults:res.results})
+            console.log("results loaded to variable!")
+            this.setState({loadings: [false, false]})
+            if (this.state.restaurantsResults.length==0) {
+              notification.info({message: "No results found! Please verify your name and ID."})
+            }
         })
+    }
+
+    handleRestaurantIdChange(value) {
+        this.setState({ selectedRestaurantId: value })
+    }
+
+    updateRestaurantDetails() {
+      getRestaurant(this.state.selectedRestaurantId).then(res => {
+          this.setState({selectedRestaurantDetails: res.results})
+          console.log("Wow, this Get Restaurant is automatic!")
+      })
     }
 
     componentDidMount() {
-      getRestaurantSearch(this.state.nameQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, this.state.categoryQuery, this.state.ratingHighQuery, this.state.ratingLowQuery, this.state.priceQuery, null, null).then(res => {
-          this.setState({restaurantsResults:res.results})
-      })
-
-        // TASK 25: call getRestaurant with the appropriate parameter and set update the correct state variable.
-        // See the usage of getMatch in the componentDidMount method of MatchesPage for a hint!
-        getRestaurant(this.state.selectedRestaurantId).then(res => {
-
-            this.setState({selectedRestaurantDetails: res.results[0],
-            selectedRestaurantPhotos: [res.results[0].photo_id, res.results[1].photo_id, res.results[2].photo_id, res.results[3].photo_id]})
-        })
-
-        getRestaurantRecommendation(this.state.userNameQuery, this.state.userIdQuery, this.state.stateQuery, this.state.cityQuery, this.state.zipQuery, null, null).then(res => {
-            this.setState({restaurantsResults:res.results})
-        })
     }
 
+
+
     render() {
+        const { loadings } = this.state;
         return (
 
             <div>
@@ -520,7 +442,7 @@ class RestaurantsRecommender extends React.Component {
                         <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
                             <Row>
                                 <Col flex={2}><FormGroup style={{ width: '25vw', margin: '0 auto' }}>
-                                    <label>Restaurant</label>
+                                    <label>Business</label>
                                     <FormInput placeholder={this.state.nameQuery? this.state.nameQuery : 'e.g. Bradley\'s Bar & Grill'} value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
                                 </FormGroup></Col>
                                 <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
@@ -552,7 +474,7 @@ class RestaurantsRecommender extends React.Component {
                                     <Radio.Group options={priceOptions} value={this.state.priceQuery} onChange={this.handlePriceChange} optionType="button"/>
                                 </FormGroup></Col>
                                 <Col flex={2}>
-                                    <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery ? this.updateSearchResults : ()=>notification.error({message: 'Please select the location!'})}>Search</Button>
+                                    <Button style={{ marginTop: '4vh' }} type="primary" onClick={()=>{if (this.state.stateQuery) { this.enterLoading(0);  this.updateSearchResults(); } else {notification.error({message: 'Please select the location!'})}}} loading={loadings[0]}>Search</Button>
                                     &nbsp;
                                     <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
                                 </Col>
@@ -584,7 +506,7 @@ class RestaurantsRecommender extends React.Component {
                                   <FormInput placeholder={this.state.zipQuery? this.state.zipQuery : 'e.g. 97217'} value={this.state.zipQuery} onChange={this.handleZipQueryChange} />
                               </FormGroup></Col>
                               <Col flex={2}>
-                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.state.stateQuery!='' && this.state.userIdQuery!='' && this.state.userNameQuery!='' ? this.updateRecommendResults : ()=>notification.error({message: 'Name, ID, and Location are required for recommendation!'})}>Recommend</Button>
+                                  <Button style={{ marginTop: '4vh' }} type="primary" onClick={()=>{if (this.state.stateQuery!='' && this.state.userIdQuery!='' && this.state.userNameQuery!='') {this.enterLoading(1); this.updateRecommendResults(); } else { notification.error({message: 'Name, ID, and Location are required for recommendation!'})}}} loading={loadings[1]}>Recommend</Button>
                                   &nbsp;
                                   <Button style={{ marginTop: '4vh' }} type="primary" onClick={this.resetQueries}>Reset</Button>
                               </Col>
@@ -592,53 +514,104 @@ class RestaurantsRecommender extends React.Component {
                         </Form>
                     </TabPane>
                 </Tabs>
-                <Divider />
-                    <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
-                    <h3>Restaurants{this.state.selectedRestaurantId}</h3>
-                    <Table dataSource={datasource1/*this.state.restaurantsResults*/} columns={restaurantColumns} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
-                    </div>
-                <Divider />
+                    {this.state.restaurantsResults.length != 0? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
+                    <Divider />
+                    <h3>Businesses</h3>
+                    <Table dataSource={this.state.restaurantsResults} columns={[
+                        {
+                            title: 'Name',
+                            dataIndex: 'name',
+                            key: 'name',
+                            sorter: (a, b) => a.name.localeCompare(b.name),
+                            render: (text, row) => <Popover content="Double click to show details" trigger="hover"><button onClick={()=>{this.handleRestaurantIdChange(row.business_id); console.log("business_id loaded! Now searching..."); this.updateRestaurantDetails();}}>{text}</button></Popover>
+                        },
+                        {
+                            title: 'City',
+                            dataIndex: 'city',
+                            key: 'city',
+                            sorter: (a, b) => a.city.localeCompare(b.city)
+                        },
+                        {
+                            title: 'State',
+                            dataIndex: 'state',
+                            key: 'state',
+                            filters: [
+                              {text: 'MA', value: 'MA'},
+                              {text: 'OR', value: 'OR'}
+                            ],
+                            onFilter: (value, record) => record.state === value,
+                        },
+                        {
+                            title:"Rating",
+                            dataIndex:"stars",
+                            key:"stars",
+                            sorter: (a, b) => a.stars - b.stars,
+                            render: (text) => <Rate allowHalf disabled value={text} style={{fontSize: 15}}/>,
+                            width: 140
+                        },
+                        {
+                            title:"Price",
+                            dataIndex:"price_range",
+                            key:"price_range",
+                            sorter: (a, b) => a.price_range - b.price_range,
+                            render: (text) => <Rate character={<DollarOutlined/>} count={4} disabled value={text} style={{fontSize: 15, color: "black"}}/>,
+                            width: 120
+                        },
+                        {
+                            title:"Categories",
+                            dataIndex:"categories",
+                            key:"categories"
+                        },
+                        {
+                            title:"Review Count",
+                            dataIndex:"review_count",
+                            key:"review_count",
+                            sorter: (a, b) => a.review_count - b.review_count
+                        },
+                    ]} pagination={{ pageSizeOptions:[5, 10], defaultPageSize: 5, showQuickJumper:true }}/>
+                    </div>:null}
 
-                {this.state.selectedRestaurantDetails ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
+                {this.state.selectedRestaurantDetails[0] ? <div style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
 
-                <Descriptions title={this.state.selectedRestaurantDetails.name} bordered layout='horizontal'>
-                  <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails.categories}</Descriptions.Item>
-                  <Descriptions.Item label="Price"><Rate character="$" count={4} disabled value={this.state.selectedRestaurantDetails.price_range}/></Descriptions.Item>
-                  <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails.stars}/></Descriptions.Item>
-                  <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails.review_count}</Descriptions.Item>
+                <Divider />
+                <Descriptions title={this.state.selectedRestaurantDetails[0].name} bordered layout='horizontal'>
+                  <Descriptions.Item label="Categories" span={3}>{this.state.selectedRestaurantDetails[0].categories}</Descriptions.Item>
+                  <Descriptions.Item label="Price"><Rate character={<DollarOutlined/>} style={{color: "black"}} count={4} disabled value={this.state.selectedRestaurantDetails[0].price_range}/></Descriptions.Item>
+                  <Descriptions.Item label="Rating"><Rate allowHalf disabled value={this.state.selectedRestaurantDetails[0].stars}/></Descriptions.Item>
+                  <Descriptions.Item label="Review Count">{this.state.selectedRestaurantDetails[0].review_count}</Descriptions.Item>
                   <Descriptions.Item label="In Business?">
-                    {this.state.selectedRestaurantDetails.is_open == '1' ? <Badge status="success" text="In Business" /> : <Badge status="error" text="Permanently Closed" />}
+                    {this.state.selectedRestaurantDetails[0].is_open == '1' ? <Badge status="success" text="In Business" /> : <Badge status="error" text="Permanently Closed" />}
                   </Descriptions.Item>
                   <Descriptions.Item label="Today's Hours">
-                  {new Date().getDay() == 1? this.state.selectedRestaurantDetails.Monday:''}
-                  {new Date().getDay() == 2? this.state.selectedRestaurantDetails.Tuesday:''}
-                  {new Date().getDay() == 3? this.state.selectedRestaurantDetails.Wednesday:''}
-                  {new Date().getDay() == 4? this.state.selectedRestaurantDetails.Thursday:''}
-                  {new Date().getDay() == 5? this.state.selectedRestaurantDetails.Friday:''}
-                  {new Date().getDay() == 6? this.state.selectedRestaurantDetails.Saturday:''}
-                  {new Date().getDay() == 7? this.state.selectedRestaurantDetails.Sunday:''}
+                  {new Date().getDay() == 1? this.state.selectedRestaurantDetails[0].Monday:''}
+                  {new Date().getDay() == 2? this.state.selectedRestaurantDetails[0].Tuesday:''}
+                  {new Date().getDay() == 3? this.state.selectedRestaurantDetails[0].Wednesday:''}
+                  {new Date().getDay() == 4? this.state.selectedRestaurantDetails[0].Thursday:''}
+                  {new Date().getDay() == 5? this.state.selectedRestaurantDetails[0].Friday:''}
+                  {new Date().getDay() == 6? this.state.selectedRestaurantDetails[0].Saturday:''}
+                  {new Date().getDay() == 7? this.state.selectedRestaurantDetails[0].Sunday:''}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails.address}, <br/>
-                  {this.state.selectedRestaurantDetails.city}, {this.state.selectedRestaurantDetails.State} {this.state.selectedRestaurantDetails.postal_code}</Descriptions.Item>
+                  <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails[0].address}, <br/>
+                  {this.state.selectedRestaurantDetails[0].city}, {this.state.selectedRestaurantDetails[0].State} {this.state.selectedRestaurantDetails[0].postal_code}</Descriptions.Item>
                 </Descriptions>
 
                 <br/>
                 <Carousel autoplay /*afterChange={onChange}*/>
                   <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[0]}.jpg`} /></h3>
+                    <h3 style={contentStyle}><Image preview={true} src={this.state.selectedRestaurantDetails[0].num_photo? `https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[0].photo_id}.jpg` : 'https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg'} /></h3>
                   </div>
-                  { this.state.selectedRestaurantPhotos[1] ? <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[1]}.jpg`} /></h3>
-                  </div> : null }
-                  { this.state.selectedRestaurantPhotos[2] ? <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[2]}.jpg`} /></h3>
-                  </div> : null }
-                  { this.state.selectedRestaurantPhotos[3] ? <div>
-                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantPhotos[3]}.jpg`} /></h3>
-                  </div> : null }
+                  {this.state.selectedRestaurantDetails[0].num_photo > 1? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[1].photo_id}.jpg`} /></h3>
+                  </div>: null}
+                  {this.state.selectedRestaurantDetails[0].num_photo > 2? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[2].photo_id}.jpg`} /></h3>
+                  </div>: null}
+                  {this.state.selectedRestaurantDetails[0].num_photo > 3? <div>
+                    <h3 style={contentStyle}><Image preview={true} src={`https://yelpphoto.s3.amazonaws.com/${this.state.selectedRestaurantDetails[3].photo_id}.jpg`} /></h3>
+                  </div>: null}
                 </Carousel>
               </div> : null}
-              <p style={{textAlign: 'center'}}>CIS550 Project ©2022 Created by Team NewBee</p>
+              <footer><br/><br/><br/><p style={{textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', backgroundColor:'#041527', color:'white'}}>CIS550 Project ©2022 Created by Team NewBee</p></footer>
               <BackTop/>
             </div>
 

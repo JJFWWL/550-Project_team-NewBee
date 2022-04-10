@@ -10,7 +10,7 @@ const getAllRestaurants = async (page, pagesize) => {
 
 
 const getRestaurant = async (id) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/restaurant?id=${id}`, {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/business?id=${id}`, {
         method: 'GET',
     })
     return res.json()
@@ -18,14 +18,14 @@ const getRestaurant = async (id) => {
 
 
 const getRestaurantSearch = async (name, state, city, zip, category, rating_high, rating_low, price, page, pagesize) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/search/restaurants?Name=${name}&State=${state}&City=${city}&Zip=${zip}&Category=${category}&RatingLow=${rating_low}&RatingHigh=${rating_high}&Price=${price}&page=${page}&pagesize=${pagesize}`, {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/search/businesses?Name=${name}&State=${state}&City=${city}&Zip=${zip}&Category=${category}&RatingLow=${rating_low}&RatingHigh=${rating_high}&Price=${price}&page=${page}&pagesize=${pagesize}`, {
         method: 'GET',
     })
     return res.json()
 }
 
 const getRestaurantRecommendation = async (userName, userId, state, city, zip, page, pagesize) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/search/restaurants?UserName=${userName}&UserId=${userId}&State=${state}&City=${city}&Zip=${zip}&page=${page}&pagesize=${pagesize}`, {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/recommend/businesses?UserName=${userName}&UserId=${userId}&State=${state}&City=${city}&Zip=${zip}&page=${page}&pagesize=${pagesize}`, {
         method: 'GET',
     })
     return res.json()
