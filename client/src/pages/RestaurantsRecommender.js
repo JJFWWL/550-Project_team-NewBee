@@ -589,7 +589,7 @@ class RestaurantsRecommender extends React.Component {
                   {new Date().getDay() == 4? this.state.selectedRestaurantDetails[0].Thursday:''}
                   {new Date().getDay() == 5? this.state.selectedRestaurantDetails[0].Friday:''}
                   {new Date().getDay() == 6? this.state.selectedRestaurantDetails[0].Saturday:''}
-                  {new Date().getDay() == 7? this.state.selectedRestaurantDetails[0].Sunday:''}
+                  {new Date().getDay() == 0? this.state.selectedRestaurantDetails[0].Sunday:''}
                   </Descriptions.Item>
                   <Descriptions.Item label="Address">{this.state.selectedRestaurantDetails[0].address}, <br/>
                   {this.state.selectedRestaurantDetails[0].city}, {this.state.selectedRestaurantDetails[0].State} {this.state.selectedRestaurantDetails[0].postal_code}</Descriptions.Item>
