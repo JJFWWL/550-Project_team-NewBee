@@ -4,333 +4,208 @@ import {
     Form,
     Input,
     Table,
-    Pagination,
+    Cascader,
     Select,
     Row,
     Col,
     Divider,
-    Slider,
-    Rate,
-    List,
-    Avatar,
+    Space,
+    Tabs,
     Button,
-    Switch,
-    Skeleton,
-    Typography,
-    Tag,
-    Space
+    Radio
 } from 'antd'
-import * as V from 'victory';
-import { RadarChart } from 'react-vis';
+import { SearchOutlined } from '@ant-design/icons';
+import { RadialChart } from 'react-vis';
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
 import {
-    getStarDistributionByState,
-    getStarDistributionByCity,
-    getStarDistributionByZip,
-    getPriceDistributionByState,
-    getPriceDistributionByCity,
-    getPriceDistributionByZip,
-    getAverageRatingByState,
-    getAverageRatingByCity,
-    getAverageRatingByZip,
-    getAveragePriceByState,
-    getAveragePriceByCity,
-    getAveragePriceByZip,
-    getBusinessPercentageByState,
-    getBusinessPercentageByCity,
-    getBusinessPercentageByZip
+    getStarDistribution,
+    getPriceDistribution,
+    getAverageRating,
+    getAveragePrice,
+    getBusinessPercentage
 } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
 import FormItem from 'antd/lib/form/FormItem';
 const wideFormat = format('.3r');
 
 const { Column, ColumnGroup } = Table;
+const { TabPane } = Tabs;
+const { Option } = Select;
 
 class ScientistPage extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            stateQuery: '',
-            cityQuery: '',
-            zipQuery: '',
-            stateLevelStarDistribution: [],
-            cityLevelStarDistribution: [],
-            zipLevelStarDistribution: [],
-            stateLevelPriceDistribution: [],
-            cityLevelPriceDistribution: [],
-            zipLevelPriceDistribution: [],
-            averageRatingByState: [],
-            averageRatingByCity: [],
-            averageRatingByZip: [],
-            averagePriceByState: [],
-            averagePriceByCity: [],
-            averagePriceByZip: [],
-            businessPercentageByState: [],
-            businessPercentageByCity: [],
-            businessPercentageByZip: []
+            regionQuery: 'state',
+            stateNameQuery: '',
+            cityNameQuery: '',
+            zipNameQuery: '',
+            StarDistribustion: [],
 
         }
-        this.handleStateQueryChange = this.handleStateQueryChange.bind(this)
-        this.hadnleCityQueryChange = this.hadnleCityQueryChange.bind(this)
-        this.handleZipQueryChange = this.handleZipQueryChange.bind(this)
 
-        this.UpdateStateLevelStarDistribution = this.UpdateStateLevelStarDistribution.bind(this)
-        this.UpdateCityLevelStarDistribution = this.UpdateCityLevelStarDistribution.bind(this)
-        this.UpdateZipLevelStarDistribution = this.UpdateZipLevelStarDistribution.bind(this)
-        this.UpdateStateLevelPriceDistribution = this.UpdateStateLevelPriceDistribution.bind(this)
-        this.UpdateCityLevelPriceDistribution = this.UpdateCityLevelPriceDistribution.bind(this)
-        this.UpdateZipLevelPriceDistribution = this.UpdateZipLevelPriceDistribution.bind(this)
-        this.UpdateAverageRatingByState = this.UpdateAverageRatingByState.bind(this)
-        this.UpdateAverageRatingByCity = this.UpdateAverageRatingByCity.bind(this)
-        this.UpdateAverageRatingByZip = this.UpdateAverageRatingByZip.bind(this)
-        this.UpdateAveragePriceByState = this.UpdateAveragePriceByState.bind(this)
-        this.UpdateAveragePriceByCity = this.UpdateAveragePriceByCity.bind(this)
-        this.UpdateAveragePriceByZip = this.UpdateAveragePriceByZip.bind(this)
-        this.UpdateBusinessPercentageByState = this.UpdateBusinessPercentageByState.bind(this)
-        this.UpdateBusinessPercentageByCity = this.UpdateBusinessPercentageByCity.bind(this)
-        this.UpdateBusinessPercentageByZip = this.UpdateBusinessPercentageByZip.bind(this)
+        this.handleRegionQueryChange = this.handleRegionQueryChange.bind(this)
+        this.handleStateNameQueryChange = this.handleStateNameQueryChange.bind(this)
+        this.handleCityNameQueryChange = this.handleCityNameQueryChange.bind(this)
+        this.handleZipNameQueryChange = this.handleZipNameQueryChange.bind(this)
+
+        this.UpdateStarDistribution = this.UpdateStarDistribution.bind(this)
 
     }
 
-    handleStateQueryChange(event) {
+    handleRegionQueryChange(e) {
         this.setState({
-            stateQuery: event.target.value
+            regionQuery: e.target.value
         })
     }
 
-    hadnleCityQueryChange(event) {
+    handleStateNameQueryChange(value) {
         this.setState({
-            cityQuery: event.target.value
+            stateNameQuery: value
         })
     }
 
-    handleZipQueryChange(event) {
+    handleCityNameQueryChange(value) {
         this.setState({
-            zipQuery: event.target.value
+            cityNameQuery: value
         })
     }
 
+    handleZipNameQueryChange(value) {
+        this.setState({
+            zipNameQuery: value
+        })
+    }
 
-    UpdateStateLevelStarDistribution() {
-        getStarDistributionByState(this.state.stateQuery, null, null).then(res => {
+    getRegionTitle(value) {
+        if (value === 'state') {
+            return 'City'
+        } else if (value === 'city') {
+            return 'Postal Code'
+        }
+    }
+
+    getRegionChild(region) {
+        if (region === 'state') {
+            return 'city'
+        } else if (region === 'city') {
+            return 'zip'
+        }
+    }
+
+
+    UpdateStarDistribution() {
+        getStarDistribution(this.state.regionQuery, this.state.stateNameQuery, null, null).then(res => {
             this.setState({
-                stateLevelStarDistribution: res.results
+                StarDistribution: res.results
+            })
+        })
+
+    }
+
+    UpdateCityLevelStarDistribution(value) {
+        this.handleCityNameQueryChange(value)
+        getStarDistribution("city", this.state.cityQuery, null, null).then(res => {
+            this.setState({
+                StarDistribution: res.results
             })
         })
     }
-
-    UpdateCityLevelStarDistribution() {
-        getStarDistributionByCity(this.state.cityQuery, null, null).then(res => {
-            this.setState({
-                cityLevelStarDistribution: res.results
-            })
-        })
-    }
-
-    UpdateZipLevelStarDistribution() {
-        getStarDistributionByZip(this.state.zipQuery, null, null).then(res => {
-            this.setState({
-                zipLevelStarDistribution: res.results
-            })
-        })
-    }
-
-    UpdateStateLevelPriceDistribution() {
-        getPriceDistributionByState(this.state.stateQuery, null, null).then(res => {
-            this.setState({
-                stateLevelPriceDistribution: res.results
-            })
-        })
-    }
-
-    UpdateCityLevelPriceDistribution() {
-        getPriceDistributionByCity(this.state.cityQuery, null, null).then(res => {
-            this.setState({
-                cityLevelPriceDistribution: res.results
-            })
-        })
-    }
-
-    UpdateZipLevelPriceDistribution() {
-        getPriceDistributionByZip(this.state.zipQuery, null, null).then(res => {
-            this.setState({
-                zipLevelPriceDistribution: res.results
-            })
-
-        })
-    }
-
-    UpdateAverageRatingByState() {
-        getAverageRatingByState(this.state.stateQuery, null, null).then(res => {
-            this.setState({
-                averageRatingByState: res.results
-            })
-        })
-    }
-
-    UpdateAverageRatingByCity() {
-        getAverageRatingByCity(this.state.cityQuery, null, null).then(res => {
-            this.setState({
-                averageRatingByCity: res.results
-            })
-        })
-    }
-
-    UpdateAverageRatingByZip() {
-        getAverageRatingByZip(this.state.zipQuery, null, null).then(res => {
-            this.setState({
-                averageRatingByZip: res.results
-            })
-        })
-    }
-
-    UpdateAveragePriceByState() {
-        getAveragePriceByState(this.state.stateQuery, null, null).then(res => {
-            this.setState({
-                averagePriceByState: res.results
-            })
-        })
-    }
-
-    UpdateAveragePriceByCity() {
-        getAveragePriceByCity(this.state.cityQuery, null, null).then(res => {
-            this.setState({
-                averagePriceByCity: res.results
-            })
-        })
-    }
-
-    UpdateAveragePriceByZip() {
-        getAveragePriceByZip(this.state.zipQuery, null, null).then(res => {
-            this.setState({
-                averagePriceByZip: res.results
-            })
-        })
-    }
-
-    UpdateBusinessPercentageByState() {
-        getBusinessPercentageByState(this.state.stateQuery, null, null).then(res => {
-            this.setState({
-                businessPercentageByState: res.results
-            })
-        })
-    }
-
-    UpdateBusinessPercentageByCity() {
-        getBusinessPercentageByCity(this.state.cityQuery, null, null).then(res => {
-            this.setState({
-                businessPercentageByCity: res.results
-            })
-        })
-    }
-
-    UpdateBusinessPercentageByZip() {
-        getBusinessPercentageByZip(this.state.zipQuery, null, null).then(res => {
-            this.setState({
-                businessPercentageByZip: res.results
-            })
-        })
-    }
-
-
-
-
 
 
     componentDidMount() {
-
-        this.UpdateStateLevelStarDistribution()
-        this.UpdateCityLevelStarDistribution()
-        this.UpdateZipLevelStarDistribution()
-        this.UpdateStateLevelPriceDistribution()
-        this.UpdateCityLevelPriceDistribution()
-        this.UpdateZipLevelPriceDistribution()
-        this.UpdateAverageRatingByState()
-        this.UpdateAverageRatingByCity()
-        this.UpdateAverageRatingByZip()
-        this.UpdateAveragePriceByState()
-        this.UpdateAveragePriceByCity()
-        this.UpdateAveragePriceByZip()
-        this.UpdateBusinessPercentageByState()
-        this.UpdateBusinessPercentageByCity()
-        this.UpdateBusinessPercentageByZip()
-
-
+        this.UpdateStarDistribution()
     }
+
+    ratingTabs = () => (
+        <div>
+            <Row justify='center'>
+                <h4>Business Rating</h4>
+                <Divider />
+
+                <Radio.Group defaultValue="state" buttonStyle="solid" onChange={this.handleRegionQueryChange} >
+                    <Radio.Button value="state">State</Radio.Button>
+                    <Radio.Button value="city">City</Radio.Button>
+                    <Radio.Button value="zip">Postal Code</Radio.Button>
+                </Radio.Group>
+                <Divider />
+                <Space>
+                    <label>Select a state:</label>
+                    <Select
+                        defaultValue={"MA"}
+                        onChange={this.handleStateNameQueryChange}
+                    >
+                        <Option value="MA">Massachusetts</Option>
+                        <Option value="OH">Ohio</Option>
+                        <Option value="OR">Oregon</Option>
+                        <Option value="TX">Texas</Option>
+                        <Option value="WA">Washington</Option>
+                    </Select>
+                    <Button type="primary" icon={<SearchOutlined />} size="medium" onClick={this.UpdateStarDistribution}>
+                        Search
+                    </Button>
+                </Space>
+                <Table dataSource={this.state.StarDistribution} pagination={{ pageSizeOptions: [10, 20], defaultPageSize: 20, showQuickJumper: true }}  >
+                    {/* [{"city":"Oregon City",1star_count, 1star_percent} */}
+                    <Column title={this.getRegionTitle(this.state.regionQuery)} dataIndex={this.getRegionChild(this.state.regionQuery)} key="action"
+                        onCell={(record) => {
+                            return {
+                                onClick: () => {
+                                    if (record.city != null) {
+                                        this.handleCityNameQueryChange(record.city)
+                                        this.handleRegionQueryChange({ target: { value: 'city' } })
+                                    } else {
+                                        this.handleZipNameQueryChange(record.zip)
+                                        this.handleRegionQueryChange({ target: { value: 'zip' } })
+                                    }
+                                    this.UpdateStarDistribution()
+
+                                }
+                            }
+                        }
+                        }
+                    // render={(text, record) => (
+                    //     <Space size="middle">
+                    //         <a href='#section2' >{record.city}</a>
+                    //     </Space>
+                    // )}
+                    />
+                    <Column title="1 Star Count" dataIndex="1star_count" key="1star_count" />
+                    <Column title="1 Star Percentage" dataIndex="1star_percent" key="1star_percent" />
+                    <Column title="2 Star Count" dataIndex="2star_count" key="2star_count" />
+                    <Column title="2 Star Percentage" dataIndex="2star_percent" key="2star_percent" />
+                    <Column title="3 Star Count" dataIndex="3star_count" key="3star_count" />
+                    <Column title="3 Star Percentage" dataIndex="3star_percent" key="3star_percent" />
+                    <Column title="4 Star Count" dataIndex="4star_count" key="4star_count" />
+                    <Column title="4 Star Percentage" dataIndex="4star_percent" key="4star_percent" />
+                    <Column title="5 Star Count" dataIndex="5star_count" key="5star_count" />
+                    <Column title="5 Star Percentage" dataIndex="5star_percent" key="5star_percent" />
+                </Table>
+                <Divider />
+            </Row>
+
+        </div>
+    );
 
     render() {
         return (
 
             <div>
                 <MenuBar />
-                <Divider orientation="left">
-                    <h3>Rating Distribution</h3>
-                </Divider>
-                <Row>
-                    <Col span={5} offset={3}>
-                        <Select
-                            showSearch
-                            placeholder="Select a State"
-                            optionFilterProp="children"
-                            // onChange={onChange}
-                            // onSearch={onSearch}
-                            filterOption={(input, option) =>
-                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                        >
-                            <Select value="MA">Massachusetts</Select>
-                            <Select value="OR">Oregon</Select>
-                            <Select value="CA">California</Select>
-                            <Select value="Co">Colorado</Select>
-                        </Select>
-                    </Col>
-                    <Col span={5} offset={3}>
-                        <Select
-                            showSearch
-                            placeholder="Select a city"
-                            optionFilterProp="children"
-                            // onChange={onChange}
-                            // onSearch={onSearch}
-                            filterOption={(input, option) =>
-                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                        >
-                            <Select value="Boston">Boston</Select>
-                            <Select value="Cambridge">Cambridge</Select>
-                            <Select value="Wocester">Wocester</Select>
-                            <Select value="Amherst">Amherst</Select>
-                        </Select>
 
-                    </Col>
-
-                    <Col span={5} offset={3}>
-                        <Select
-                            showSearch
-                            placeholder="Select a zipcode"
-                            optionFilterProp="children"
-                            // onChange={onChange}
-                            // onSearch={onSearch}
-                            filterOption={(input, option) =>
-                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                        >
-                            <Select value="1111">1111</Select>
-                            <Select value="2222">2222</Select>
-                            <Select value="3333">3333</Select>
-
-                        </Select>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col span={6} offset={3}>
-                        <V.VictoryPie
-                            data={[
-                                { x: "MA", y: 35 },
-                                { x: "CA", y: 40 },
-                                { x: "CO", y: 55 }
-                            ]}
-                        />
-                    </Col>
-                </Row>
+                <Tabs defaultActiveKey="1" centered type="card" size='large' >
+                    <TabPane tab="Rating" key="1">
+                        {this.ratingTabs()}
+                    </TabPane>
+                    <TabPane tab="Price" key="2">
+                        Content of Tab Pane 2
+                    </TabPane>
+                    <TabPane tab="Map" key="3">
+                        Content of Tab Pane 3
+                    </TabPane>
+                </Tabs>
             </div >
         )
     }

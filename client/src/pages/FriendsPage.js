@@ -20,7 +20,6 @@ import {
     Tag,
     Space
 } from 'antd'
-import { RadarChart } from 'react-vis';
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
@@ -38,19 +37,21 @@ class FriendsPage extends React.Component {
             loginNameQuery: '',
             loginIDQuery: '',
             userNameQuery: '',
-            userIDQuery: '',
+            userIDQuery: '__0cgHc1KI1O7WhflPTZFA',
             businessIDQuery: '',
             loginUserResults: [],
             businessResults: [],
             userResults: [],
+            loginVisible: true,
             oneConnection: false,
             twoConnection: false
         }
-        this.handleLoginNameQueryChnage = this.handleLoginNameQueryChange.bind(this)
-        this.handleLoginIDQueryChnage = this.handleLoginIDQueryChnage.bind(this)
+        this.handleLoginNameQueryChange = this.handleLoginNameQueryChange.bind(this)
+        this.handleLoginIDQueryChange = this.handleLoginIDQueryChange.bind(this)
         this.handleUserNameQueryChange = this.handleUserNameQueryChange.bind(this)
         this.handleUserIDQueryChange = this.handleUserIDQueryChange.bind(this)
         this.handleBusinessIDQueryChange = this.handleBusinessIDQueryChange.bind(this)
+        // this.handleLoginSuccess = this.handleLoginSuccess.bind(this)
         this.updateLoginResult = this.updateLoginResult.bind(this)
         this.updateBusinessSearchResults = this.updateBusinessSearchResults.bind(this)
         this.updateUserSearchResults = this.updateUserSearchResults.bind(this)
@@ -61,7 +62,7 @@ class FriendsPage extends React.Component {
             loginNameQuery: event.target.value
         })
     }
-    handleLoginIDQueryChnage(event) {
+    handleLoginIDQueryChange(event) {
         this.setState({
             loginIDQuery: event.target.value
         })
@@ -86,13 +87,38 @@ class FriendsPage extends React.Component {
         })
     }
 
-    updateLoginResult() {
-        getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
-            this.setState({
-                loginUserResults: res.results
-            })
+    handleLoginSuccess() {
+        this.setState({
+            loginSuccess: true
         })
     }
+
+    hideLoginRow() {
+        this.setState({
+            loginVisible: false
+        })
+    }
+
+
+
+
+    updateLoginResult() {
+        getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
+            console.log(res.results[0]);
+            this.setState({
+                userIDQuery: res.results[0].user_id
+            })
+        })
+
+        getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
+            this.setState({
+                businessResults: res.results
+            })
+        })
+
+
+    }
+
 
     updateBusinessSearchResults() {
         getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
@@ -100,7 +126,6 @@ class FriendsPage extends React.Component {
                 businessResults: res.results
             })
         })
-
     }
 
     updateUserSearchResults() {
@@ -119,7 +144,7 @@ class FriendsPage extends React.Component {
             this.setState({ loginUserResults: res.results })
         })
 
-        getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
+        getBusinessByUserID(this.state.login, null, null).then(res => {
             this.setState({ businessResults: res.results })
         })
 
@@ -129,16 +154,13 @@ class FriendsPage extends React.Component {
 
     }
 
-    render() {
+    login = () => {
         return (
-
             <div>
-
-                <MenuBar />
                 <Divider orientation="left">
                     <h3>Login</h3>
                 </Divider>
-                <Row>
+                <Row key={"login"}>
                     <Col span={12} offset={3}>
                         <Form
                             name="basic"
@@ -150,7 +172,7 @@ class FriendsPage extends React.Component {
                                 name="username"
                                 rules={[{ required: true, message: 'Please input your username!' }]}
                                 value={this.state.loginNameQuery}
-                            // onChange={this.handleLoginNameQueryChange}
+                                onChange={this.handleLoginNameQueryChange}
                             >
                                 <Input />
                             </Form.Item>
@@ -160,7 +182,7 @@ class FriendsPage extends React.Component {
                                 name="password"
                                 rules={[{ required: true, message: 'Please input your password!' }]}
                                 value={this.state.loginIDQuery}
-                            // onChange={this.handleLoginIDQueryChnage}
+                                onChange={this.handleLoginIDQueryChange}
 
                             >
                                 <Input.Password />
@@ -174,10 +196,26 @@ class FriendsPage extends React.Component {
                         </Form>
                     </Col>
                 </Row>
+            </div>
+        )
+    }
 
+    // oneConnectionBusiness()
+
+
+    render() {
+        return (
+
+            <div>
+
+                <MenuBar />
+                <div className="container" >
+                    {this.login()}
+                </div>
                 <Divider orientation="left">
                     <h3>1-Connection</h3>
                 </Divider>
+
                 <div style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
                     <div class="section one" id="section1" style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
                         <h5>Favorite Business</h5>
