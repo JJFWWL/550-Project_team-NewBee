@@ -13,10 +13,8 @@ app.use(cors({ credentials: true, origin: ['http://localhost:3000'] }));
 
 //1.1 A business search
 app.get('/search/businesses', routes.search_businesses)
-
 //1.1B & 1.2B select a business
 app.get('/business', routes.business)
-
 //1.2 A business recommender
 app.get('/recommend/businesses', routes.recommend_businesses)
 
@@ -35,6 +33,8 @@ app.get('/price_sci/:choice', routes.price_sci)
 app.get('/avg_sci/:choice', routes.avg_sci)
 // 3.4
 app.get('/cat_map/:choice', routes.cat_map)
+//3.5
+app.get('/county_health_businesses', routes.county_health_businesses)
 
 app.listen(config.server_port, () => {
     console.log(`Server running at http://${config.server_host}:${config.server_port}/`);

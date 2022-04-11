@@ -13,6 +13,7 @@ const connection = mysql.createConnection({
 });
 connection.connect();
 
+
 // ********************************************
 //               GENERAL ROUTES
 // ********************************************
@@ -29,7 +30,7 @@ async function search_businesses(req, res) {
   const category = req.query.Category ? req.query.Category : ''
   const rlow = req.query.RatingLow ? req.query.RatingLow : 0
   const rhigh = req.query.RatingHigh ? req.query.RatingHigh : 5
-  const price = req.query.Price ? req.query.Price : 4
+  const price = req.query.Price ? `AND RestaurantsPriceRange2 = ${req.query.Price}` : ''
 
   if (req.query.page && !isNaN(req.query.page)) {
       // This is the case where page is defined.
@@ -41,7 +42,7 @@ async function search_businesses(req, res) {
       FROM Business
       WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
           AND categories like '%${category}%'
-          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2 <= ${price}
+          AND stars>= ${rlow} AND stars<=${rhigh} ${price}
       ORDER BY stars DESC, review_count DESC 
       LIMIT ${pagesize} 
       OFFSET ${((page-1)*pagesize)}`, 
@@ -61,7 +62,7 @@ async function search_businesses(req, res) {
       FROM Business
       WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
           AND categories like '%${category}%'
-          AND stars>= ${rlow} AND stars<=${rhigh} AND RestaurantsPriceRange2<=${price}
+          AND stars>= ${rlow} AND stars<=${rhigh} ${price}
       ORDER BY stars DESC, review_count DESC`, 
       function (error, results, fields) {
           if (error) {
@@ -91,8 +92,8 @@ async function business(req, res) {
           RestaurantsTakeOut,
           garage, lot, street, valet, validated,
           photo_id, caption, label, num_photo
-      FROM Business B join photo P on B.business_id = P.business_id
-      join num_photos N on P.business_id = N.business_id
+      FROM Business B left join photo P on B.business_id = P.business_id
+      left join num_photos N on P.business_id = N.business_id
       WHERE B.business_id = '${id}'`, 
       function (error, results, fields) {
           if (error) {
@@ -124,7 +125,7 @@ async function recommend_businesses(req, res) {
       connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
       SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
               substring_index(B.categories, ',', 1) keyword
-      FROM user U join review_Portland R on U.user_id=R.user_id
+      FROM user U join review R on U.user_id=R.user_id
       join Business B on R.business_id = B.business_id
       WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
       ORDER BY stars DESC
@@ -132,8 +133,8 @@ async function recommend_businesses(req, res) {
       SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
               B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
       FROM Business B join K
-          on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
-          AND FIND_IN_SET(K.keyword, categories)
+          on B.RestaurantsPriceRange2 = K.price_range 
+          AND B.stars>=4 AND FIND_IN_SET(K.keyword, categories)
       WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
       ORDER BY B.stars DESC, B.review_count DESC                  
       LIMIT ${pagesize} 
@@ -151,7 +152,7 @@ async function recommend_businesses(req, res) {
       connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
           SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
                   substring_index(B.categories, ',', 1) keyword
-          FROM user U join review_Portland R on U.user_id=R.user_id
+          FROM user U join review R on U.user_id=R.user_id
           join Business B on R.business_id = B.business_id
           WHERE U.user_id like '%${userid}%' and U.name like '%${username}%' and U.review_count>0
           ORDER BY stars DESC
@@ -159,8 +160,8 @@ async function recommend_businesses(req, res) {
           SELECT B.business_id, B.name, B.address, B.city, B.state, B.postal_code,
                   B.stars, B.review_count, B.categories, B.RestaurantsPriceRange2 as price_range
           FROM Business B join K
-              on B.RestaurantsPriceRange2 = K.price_range AND B.stars=K.stars
-              AND FIND_IN_SET(K.keyword, categories)
+              on B.RestaurantsPriceRange2 = K.price_range 
+              AND B.stars>=4 AND FIND_IN_SET(K.keyword, categories)
           WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
           ORDER BY B.stars DESC, B.review_count DESC`, 
       function (error, results, fields) {
@@ -175,8 +176,15 @@ async function recommend_businesses(req, res) {
 }
 
 // page 2.1 login function
+//http://localhost:8080/login?name=Don&uid=0ZxoUw ->correct format
 //http://localhost:8080/login/?name=Don&uid=0ZxoUw
+
 //http://localhost:8080/login/?name=Sparkely&uid=sL-tHA
+
+//reference:
+//id: __-xRn3SOmAoLA80MEsAvA        name: Derek
+//id: __0cgHc1KI1O7WhflPTZFA        name: jon
+
 async function login(req, res) {
   if (req.query.name !== undefined && req.query.uid != undefined) {
     const name = req.query.name;
@@ -265,14 +273,10 @@ async function friend_business(req, res) {
 //http://localhost:8080/friends/friend_connection/j-mkLrxKtOzGAh4ymO9bJg/?userID=__dUOXQ2Pa149eLgsL-tHA
 
 async function friend_connection(req, res) {
-
-
   const ID = req.params.id ? req.params.id : "3dy8So9wPWTYJSsrFvHDMg"
-
   const userID = req.query.userID ? req.query.userID : "Pf7FI0OukC_CEcCz0ZxoUw";
 
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
@@ -387,13 +391,11 @@ async function friend_connection(req, res) {
 //http://localhost:8080/star_sci/city/?name=Boston
 //http://localhost:8080/star_sci/zip/?name=02215
 async function star_sci(req, res) {
-
-
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
+
     if (req.params.choice === 'state') {
       const name = req.query.name ? req.query.name : "MA";
       connection.query(
@@ -536,9 +538,7 @@ async function star_sci(req, res) {
 //http://localhost:8080/price_sci/zip/?name=97217
 async function price_sci(req, res) {
 
-
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
@@ -759,8 +759,115 @@ async function cat_map(req, res) {
       }
     }
   );
-
 }
+
+// 3.5 County Health Rankings and price/star frequency distributions
+//http://localhost:8080/health_ranking_businesses_stats/?State=OR
+async function county_health_businesses(req, res) {
+
+  const state = req.query.State ? req.query.State : ''
+ 
+  if (req.query.page && !isNaN(req.query.page)) {
+      // This is the case where page is defined.
+      const pagesize = req.query.pagesize ? req.query.pagesize : 10
+      const page = req.query.page
+
+      connection.query(`WITH H (business_id, price_range, stars,
+          zip, city, state, fips, county, num_ranked_counties,
+          health_factors_rank) AS
+          (SELECT B.business_id, RestaurantsPriceRange2, stars,
+          B.postal_code, B.city, B.state, R.fips, R.county, R.number_of_ranked_counties,
+          R.health_factors_rank
+      FROM BusinessFull B join Zip_county_crosswalk Z
+          on B.postal_code = Z.zip AND B.city = Z.city AND B.state = Z.state
+          join County_health_ranking R on Z.fips = R.fips
+          WHERE B.state like '%${state}%')
+      SELECT H.state, H.num_ranked_counties, H.fips, H.county, H.health_factors_rank,
+            SUM(IF(H.price_range = 1, 1, 0)) as price1_count,
+            SUM(IF(H.price_range = 2, 1, 0)) as price2_count,
+            SUM(IF(H.price_range = 3, 1, 0)) as price3_count,
+            SUM(IF(H.price_range = 4, 1, 0)) as price4_count,
+            SUM(IF(H.price_range >0, 1, 0)) as price_count,
+            SUM(IF(H.price_range = 1, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price1_pct,
+            SUM(IF(H.price_range = 2, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price2_pct,
+            SUM(IF(H.price_range = 3, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price3_pct,
+            SUM(IF(H.price_range = 4, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price4_pct,
+            SUM(IF(H.stars <= 1, 1, 0)) as star0_1_count,
+            SUM(IF(H.stars>1 AND stars<=2, 1, 0)) as star1_2_count,
+            SUM(IF(H.stars>2 AND stars<=3, 1, 0)) as star2_3_count,
+            SUM(IF(H.stars>3 AND stars<=4, 1, 0)) as star3_4_count,
+            SUM(IF(H.stars>4 AND stars<=5, 1, 0)) as star4_5_count,
+            SUM(IF(H.stars >0, 1, 0)) as star_count,
+            SUM(IF(H.stars <= 1, 1, 0))/SUM(IF(H.stars >0, 1, 0)) as star0_1_pct,
+            SUM(IF(H.stars>1 AND stars<=2, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star1_2_pct,
+            SUM(IF(H.stars>2 AND stars<=3, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star2_3_pct,
+            SUM(IF(H.stars>3 AND stars<=4, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star3_4_pct,
+            SUM(IF(H.stars>4 AND stars<=5, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star4_5_pct
+      FROM H
+      GROUP BY H.state, H.fips, H.county, H.health_factors_rank
+      having count(H.business_id)>=10
+      ORDER BY H.state, H.health_factors_rank
+      LIMIT ${pagesize} 
+      OFFSET ${((page-1)*pagesize)}`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+
+  } else {     
+      connection.query(`WITH H (business_id, price_range, stars,
+        zip, city, state, fips, county, num_ranked_counties,
+        health_factors_rank) AS
+        (SELECT B.business_id, RestaurantsPriceRange2, stars,
+        B.postal_code, B.city, B.state, R.fips, R.county, R.number_of_ranked_counties,
+        R.health_factors_rank
+    FROM BusinessFull B join Zip_county_crosswalk Z
+        on B.postal_code = Z.zip AND B.city = Z.city AND B.state = Z.state
+        join County_health_ranking R on Z.fips = R.fips
+        WHERE B.state like '%${state}%')
+    SELECT H.state, H.num_ranked_counties, H.fips, H.county, H.health_factors_rank,
+           SUM(IF(H.price_range = 1, 1, 0)) as price1_count,
+           SUM(IF(H.price_range = 2, 1, 0)) as price2_count,
+           SUM(IF(H.price_range = 3, 1, 0)) as price3_count,
+           SUM(IF(H.price_range = 4, 1, 0)) as price4_count,
+           SUM(IF(H.price_range >0, 1, 0)) as price_count,
+           SUM(IF(H.price_range = 1, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price1_pct,
+           SUM(IF(H.price_range = 2, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price2_pct,
+           SUM(IF(H.price_range = 3, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price3_pct,
+           SUM(IF(H.price_range = 4, 1, 0))/SUM(IF(H.price_range >0, 1, 0)) as price4_pct,
+           SUM(IF(H.stars <= 1, 1, 0)) as star0_1_count,
+           SUM(IF(H.stars>1 AND stars<=2, 1, 0)) as star1_2_count,
+           SUM(IF(H.stars>2 AND stars<=3, 1, 0)) as star2_3_count,
+           SUM(IF(H.stars>3 AND stars<=4, 1, 0)) as star3_4_count,
+           SUM(IF(H.stars>4 AND stars<=5, 1, 0)) as star4_5_count,
+           SUM(IF(H.stars >0, 1, 0)) as star_count,
+           SUM(IF(H.stars <= 1, 1, 0))/SUM(IF(H.stars >0, 1, 0)) as star0_1_pct,
+           SUM(IF(H.stars>1 AND stars<=2, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star1_2_pct,
+           SUM(IF(H.stars>2 AND stars<=3, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star2_3_pct,
+           SUM(IF(H.stars>3 AND stars<=4, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star3_4_pct,
+           SUM(IF(H.stars>4 AND stars<=5, 1, 0))/SUM(IF(H.stars >0, 1, 0))  as star4_5_pct
+    FROM H
+    GROUP BY H.state, H.fips, H.county, H.health_factors_rank
+    having count(H.business_id)>=10
+    ORDER BY H.state, H.health_factors_rank`, 
+      function (error, results, fields) {
+          if (error) {
+              console.log(error)
+              res.json({ error: error })
+          } else if (results) {
+              res.json({ results: results })
+          }
+      });
+  }
+}
+
+
+
+
 module.exports = {
   search_businesses,
   business,
@@ -772,4 +879,5 @@ module.exports = {
   price_sci,
   avg_sci,
   cat_map,
+  county_health_businesses
 }
