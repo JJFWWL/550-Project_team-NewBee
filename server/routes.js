@@ -176,6 +176,7 @@ async function recommend_businesses(req, res) {
 
 // page 2.1 login function
 //http://localhost:8080/login/?name=Don&uid=0ZxoUw
+//http://localhost:8080/login/?name=Sparkely&uid=sL-tHA
 async function login(req, res) {
   if (req.query.name !== undefined && req.query.uid != undefined) {
     const name = req.query.name;
@@ -203,7 +204,9 @@ async function login(req, res) {
 
 // page 2.2
 //changed for project to get the user favorite business(=5) and return as result
-//http://localhost:8080/friends/friend_business/userid/?page=2&pagesize=5
+//__dUOXQ2Pa149eLgsL-tHA
+//http://localhost:8080/friends/friend_business/Pf7FI0OukC_CEcCz0ZxoUw/?page=2&pagesize=5
+//http://localhost:8080/friends/friend_business/__dUOXQ2Pa149eLgsL-tHA
 async function friend_business(req, res) {
 
   const userid = req.params.userid ? req.params.userid : "Pf7FI0OukC_CEcCz0ZxoUw"
@@ -257,8 +260,9 @@ async function friend_business(req, res) {
 
 // Route 2.3 (handler)
 //changed for project to get the user favorite business(>=4) and return as result
-//http://localhost:8080/friends/friend_connection/businessID/?userID=Pf7FI0OukC_CEcCz0ZxoUw&page=2&pagesize=5
-
+//extra business:aS3Fhk3YHgLvyqM98augMA
+//http://localhost:8080/friends/friend_connection/3dy8So9wPWTYJSsrFvHDMg/?userID=Pf7FI0OukC_CEcCz0ZxoUw&page=2&pagesize=5
+//http://localhost:8080/friends/friend_connection/j-mkLrxKtOzGAh4ymO9bJg/?userID=__dUOXQ2Pa149eLgsL-tHA
 
 async function friend_connection(req, res) {
 
@@ -303,6 +307,7 @@ async function friend_connection(req, res) {
           FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
           JOIN user ON review.user_id= user.user_id
           WHERE review.stars=5  AND review.user_id!='${userID}'
+          LIMIT 1000
           ),
          TOT AS(
          SELECT * FROM ONE
@@ -354,6 +359,7 @@ async function friend_connection(req, res) {
         FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
         JOIN user ON review.user_id= user.user_id
         WHERE review.stars=5  AND review.user_id!='${userID}'
+        LIMIT 1000
         ),
        TOT AS(
        SELECT * FROM ONE
@@ -377,8 +383,9 @@ async function friend_connection(req, res) {
 }
 
 //page 3.1 star distribution_state level(input state name)
-//http://localhost:8080/star_sci/choice/?name=OR&page=2&pagesize=5
-
+//http://localhost:8080/star_sci/state/?name=OR&page=2&pagesize=5
+//http://localhost:8080/star_sci/city/?name=Boston
+//http://localhost:8080/star_sci/zip/?name=02215
 async function star_sci(req, res) {
 
 
@@ -524,8 +531,9 @@ async function star_sci(req, res) {
 }
 
 //page 3.2 price distribution_state level(input state name)
-//http://localhost:8080/price_sci/choice/?name=OR&page=2&pagesize=5
-
+//http://localhost:8080/price_sci/state/?name=OR&page=2&pagesize=5
+//http://localhost:8080/price_sci/city/?name=Portland
+//http://localhost:8080/price_sci/zip/?name=97217
 async function price_sci(req, res) {
 
 
@@ -674,7 +682,9 @@ async function price_sci(req, res) {
   }
 }
 //3.3 location average price/star
-//http://localhost:8080/avg_sci/choice?page=2&pagesize=5 , input choice: state, city, postal_code
+//http://localhost:8080/avg_sci/state?page=2&pagesize=5
+//http://localhost:8080/avg_sci/city
+//http://localhost:8080/avg_sci/postal_code
 async function avg_sci(req, res) {
   const choice = req.params.choice;
 
@@ -687,6 +697,7 @@ async function avg_sci(req, res) {
       `SELECT ${choice}, COUNT(stars) AS num,AVG(RestaurantsPriceRange2) AS avg_price, AVG(stars) AS avg_review
         FROM BusinessFull
         GROUP BY ${choice}
+        HAVING COUNT(stars)>10
         ORDER BY num DESC ${stringLimit}`,
 
       function (error, results, fields) {
@@ -705,6 +716,7 @@ async function avg_sci(req, res) {
       `SELECT ${choice}, COUNT(stars) AS num,AVG(RestaurantsPriceRange2) AS avg_price, AVG(stars) AS avg_review
       FROM BusinessFull
       GROUP BY ${choice}
+      HAVING COUNT(stars)>10
       ORDER BY num DESC`,
 
       function (error, results, fields) {
@@ -722,7 +734,9 @@ async function avg_sci(req, res) {
 }
 
 //3.4 categories_map
-//http://localhost:8080/cat_map/choice?name=Portland , input choice: state, city, postal_code, name is related name
+//http://localhost:8080/cat_map/state?name=MA
+//http://localhost:8080/cat_map/city?name=Boston
+//http://localhost:8080/cat_map/postal_code?name=97217
 async function cat_map(req, res) {
   const choice = req.params.choice;
   const name = req.query.name;
@@ -731,6 +745,7 @@ async function cat_map(req, res) {
       FROM BusinessFull
       WHERE ${choice}='${name}'
       GROUP BY new_categories
+      HAVING COUNT(*)>10
       ORDER BY count DESC`,
 
     function (error, results, fields) {
