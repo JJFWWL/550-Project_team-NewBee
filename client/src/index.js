@@ -14,6 +14,7 @@ import "shards-ui/dist/css/shards.min.css"
 import RestaurantsRecommender from './pages/RestaurantsRecommender';
 import FriendsPage from './pages/FriendsPage';
 import ScientistPage from './pages/ScientistPage';
+import Home from './pages/HomePage';
 
 ReactDOM.render(
 	<div>
@@ -22,7 +23,7 @@ ReactDOM.render(
 				<Route exact
 					path="/"
 					render={() => (
-						<RestaurantsRecommender />
+						<Home />
 					)} />
 				<Route exact
 					path="/friends"
