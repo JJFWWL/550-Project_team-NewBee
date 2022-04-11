@@ -12,7 +12,7 @@ import 'antd/dist/antd.css';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "shards-ui/dist/css/shards.min.css"
 import RestaurantsRecommender from './pages/RestaurantsRecommender';
-import FriendPage from './pages/FriendPage';
+import FriendsPage from './pages/FriendsPage';
 import ScientistPage from './pages/ScientistPage';
 
 ReactDOM.render(
@@ -27,7 +27,7 @@ ReactDOM.render(
 				<Route exact
 					path="/friends"
 					render={() => (
-						<FriendPage />
+						<FriendsPage />
 					)} />
 				<Route exact
 					path="/businesses"

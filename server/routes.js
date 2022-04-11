@@ -176,7 +176,11 @@ async function recommend_businesses(req, res) {
 }
 
 // page 2.1 login function
+//http://localhost:8080/login?name=Don&uid=0ZxoUw ->correct format
 //http://localhost:8080/login/?name=Don&uid=0ZxoUw
+//reference:
+//id: __-xRn3SOmAoLA80MEsAvA        name: Derek
+//id: __0cgHc1KI1O7WhflPTZFA        name: jon
 async function login(req, res) {
   if (req.query.name !== undefined && req.query.uid != undefined) {
     const name = req.query.name;
@@ -377,13 +381,11 @@ async function friend_connection(req, res) {
 //http://localhost:8080/star_sci/choice/?name=OR&page=2&pagesize=5
 
 async function star_sci(req, res) {
-
-
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
+
     if (req.params.choice === 'state') {
       const name = req.query.name ? req.query.name : "MA";
       connection.query(
