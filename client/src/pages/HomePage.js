@@ -13,7 +13,7 @@ class Home extends React.Component {
       backgroundImage: `url("https://media.istockphoto.com/photos/wood-texture-table-top-with-blur-light-gold-bokeh-in-caferestaurant-picture-id1129661826?k=20&m=1129661826&s=612x612&w=0&h=-MUT00Fs2Qj9oZhly0c_EJKzpwkkMArzKv_lxbCDb1I=")`,
       backgroundRepeat: 'no-repeat',
       backgroundSize: 'cover',
-      height: 800,
+      height: 900,
       textAlign: 'center'
     }}>
 <MenuBar/>
