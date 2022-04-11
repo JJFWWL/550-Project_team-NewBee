@@ -15,6 +15,7 @@ import {
     Radio
 } from 'antd'
 import { SearchOutlined } from '@ant-design/icons';
+import { Bar } from '@ant-design/plots';
 import { RadialChart } from 'react-vis';
 import { format } from 'd3-format';
 
@@ -189,6 +190,194 @@ class ScientistPage extends React.Component {
         </div>
     );
 
+    healthTab () {
+      return (
+        <div style={{textAlign: 'center'}}>
+
+        <Select defaultValue="Massachusetts" placeholder="Please select a state" style={{width: 200}}>
+          <Option value="CO">Colorado</Option>
+          <Option value="FL">Florida</Option>
+          <Option value="GA">Georgia</Option>
+          <Option value="MA">Massachusetts</Option>
+          <Option value="OH">Ohio</Option>
+          <Option value="OR">Oregon</Option>
+          <Option value="TX">Texas</Option>
+          <Option value="WA">Washington</Option>
+        </Select>
+        &nbsp;
+<Button>Search</Button>
+<br/>
+<Row>
+<Radio.Group defaultValue='Price' buttonStyle="outline">
+<Radio.Button value='Price'>Price</Radio.Button>
+<Radio.Button value='Rating'>Rating</Radio.Button>
+</Radio.Group>
+</Row>
+<br/>
+<Bar {...{
+  data: [
+    {
+      country: '$',
+      year: 'Norfolk',
+      value: 502,
+    },
+    {
+      country: '$',
+      year: 'Middlesex',
+      value: 635,
+    },
+    {
+      country: '$',
+      year: 'Plymouth',
+      value: 809,
+    },
+    {
+      country: '$',
+      year: 'Essex',
+      value: 947,
+    },
+    {
+      country: '$',
+      year: 'Suffolk',
+      value: 1402,
+    },
+    {
+      country: '$',
+      year: 'Worcester',
+      value: 3634,
+    },
+    {
+      country: '$',
+      year: 'Franklin',
+      value: 5268,
+    },
+    {
+      country: '$$',
+      year: 'Norfolk',
+      value: 106,
+    },
+    {
+      country: '$$',
+      year: 'Middlesex',
+      value: 107,
+    },
+    {
+      country: '$$',
+      year: 'Plymouth',
+      value: 111,
+    },
+    {
+      country: '$$',
+      year: 'Essex',
+      value: 133,
+    },
+    {
+      country: '$$',
+      year: 'Suffolk',
+      value: 221,
+    },
+    {
+      country: '$$',
+      year: 'Worcester',
+      value: 767,
+    },
+    {
+      country: '$$',
+      year: 'Franklin',
+      value: 1766,
+    },
+    {
+      country: '$$$',
+      year: 'Norfolk',
+      value: 163,
+    },
+    {
+      country: '$$$',
+      year: 'Middlesex',
+      value: 203,
+    },
+    {
+      country: '$$$',
+      year: 'Plymouth',
+      value: 276,
+    },
+    {
+      country: '$$$',
+      year: 'Essex',
+      value: 408,
+    },
+    {
+      country: '$$$',
+      year: 'Suffolk',
+      value: 547,
+    },
+    {
+      country: '$$$',
+      year: 'Worcester',
+      value: 729,
+    },
+    {
+      country: '$$$',
+      year: 'Franklin',
+      value: 628,
+    },
+    {
+      country: '$$$$',
+      year: 'Norfolk',
+      value: 163,
+    },
+    {
+      country: '$$$$',
+      year: 'Middlesex',
+      value: 203,
+    },
+    {
+      country: '$$$$',
+      year: 'Plymouth',
+      value: 276,
+    },
+    {
+      country: '$$$$',
+      year: 'Essex',
+      value: 408,
+    },
+    {
+      country: '$$$$',
+      year: 'Suffolk',
+      value: 547,
+    },
+    {
+      country: '$$$$',
+      year: 'Worcester',
+      value: 729,
+    },
+    {
+      country: '$$$$',
+      year: 'Franklin',
+      value: 628,
+    },
+  ],
+    xField: 'value',
+    yField: 'year',
+    seriesField: 'country',
+    isPercent: true,
+    isStack: true,
+
+    /** 自定义颜色 */
+    // color: ['#2582a1', '#f88c24', '#c52125', '#87f4d0'],
+    label: {
+      position: 'middle',
+      content: (item) => {
+        return item.value.toFixed(2);
+      },
+      style: {
+        fill: '#fff',
+      },
+    }}}/>
+        </div>
+      )
+    }
+
     render() {
         return (
 
@@ -204,6 +393,9 @@ class ScientistPage extends React.Component {
                     </TabPane>
                     <TabPane tab="Map" key="3">
                         Content of Tab Pane 3
+                    </TabPane>
+                    <TabPane tab="Health" key="4">
+                        {this.healthTab()}
                     </TabPane>
                 </Tabs>
             </div >
