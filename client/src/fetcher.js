@@ -92,7 +92,6 @@ const getHealthData = async (state, page, pagesize) => {
 };
 
 export {
-    getAllRestaurants,
     getRestaurant,
     getRestaurantSearch,
     getRestaurantRecommendation,
