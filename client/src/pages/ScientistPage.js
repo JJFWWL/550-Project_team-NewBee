@@ -25,7 +25,8 @@ import {
     getPriceDistribution,
     getAverageRating,
     getAveragePrice,
-    getBusinessPercentage
+    getBusinessPercentage,
+    getHealthData
 } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
 import FormItem from 'antd/lib/form/FormItem';
@@ -44,7 +45,10 @@ class ScientistPage extends React.Component {
             cityNameQuery: '',
             zipNameQuery: '',
             StarDistribustion: [],
-
+            healthStateQuery: '',
+            healthData: [],
+            healthDataPrice: [],
+            healthDataRating: [],
         }
 
         this.handleRegionQueryChange = this.handleRegionQueryChange.bind(this)
@@ -52,8 +56,11 @@ class ScientistPage extends React.Component {
         this.handleCityNameQueryChange = this.handleCityNameQueryChange.bind(this)
         this.handleZipNameQueryChange = this.handleZipNameQueryChange.bind(this)
 
-        this.UpdateStarDistribution = this.UpdateStarDistribution.bind(this)
+        //Query 3.5 method onChange of healthStateQuery
+        this.handleHealthStateQueryChange = this.handleHealthStateQueryChange.bind(this)
 
+        this.UpdateStarDistribution = this.UpdateStarDistribution.bind(this)
+        this.updateHealthData = this.updateHealthData.bind(this)
     }
 
     handleRegionQueryChange(e) {
@@ -77,6 +84,12 @@ class ScientistPage extends React.Component {
     handleZipNameQueryChange(value) {
         this.setState({
             zipNameQuery: value
+        })
+    }
+
+    handleHealthStateQueryChange(value) {
+        this.setState({
+            healthStateQuery: value
         })
     }
 
@@ -116,8 +129,72 @@ class ScientistPage extends React.Component {
     }
 
 
+    updateHealthData() {
+        getHealthData(this.state.healthStateQuery, null, null).then(res => {
+          var priceData = [];
+          var ratingData = [];
+
+          for (var i = 0; i < res.results.length; i++) {
+            console.log(`enter the ${i} th loop`)
+            priceData.push.apply(priceData, [
+              {
+              price: '$',
+              county: res.results[i].county,
+              value: res.results[i].price1_count
+              },
+              {
+              price: '$$',
+              county: res.results[i].county,
+              value: res.results[i].price2_count
+              },
+              {
+              price: '$$$',
+              county: res.results[i].county,
+              value: res.results[i].price3_count
+              },
+              {
+              price: '$$$$',
+              county: res.results[i].county,
+              value: res.results[i].price4_count
+              }
+            ])
+            ratingData.push.apply(ratingData, [
+              {
+              rating: '1-2 Stars',
+              county: res.results[i].county,
+              value: res.results[i].star1_2_count
+              },
+              {
+              rating: '2-3 Stars',
+              county: res.results[i].county,
+              value: res.results[i].star2_3_count
+              },
+              {
+              rating: '3-4 Stars',
+              county: res.results[i].county,
+              value: res.results[i].star3_4_count
+              },
+              {
+              rating: '4-5 Stars',
+              county: res.results[i].county,
+              value: res.results[i].star4_5_count
+              }
+            ])
+          }
+          console.log(`priceData's length is : ${priceData.length}`)
+            this.setState({
+                healthData: res.results,
+                healthDataPrice: priceData,
+                healthDataRating: ratingData,
+            })
+            console.log(`${res.results.length}, and ${this.state.healthDataPrice.length}`)
+            console.log(`${this.state.healthDataPrice[0].price}, and ${this.state.healthDataPrice[0].county}, and ${this.state.healthDataPrice[0].value}`)
+        })
+    }
+
     componentDidMount() {
         this.UpdateStarDistribution()
+
     }
 
     ratingTabs = () => (
@@ -190,11 +267,11 @@ class ScientistPage extends React.Component {
         </div>
     );
 
+
     healthTab () {
       return (
         <div style={{textAlign: 'center'}}>
-
-        <Select defaultValue="Massachusetts" placeholder="Please select a state" style={{width: 200}}>
+        <Select placeholder='Select a state' style={{width: 150}} onChange={this.handleHealthStateQueryChange}>
           <Option value="CO">Colorado</Option>
           <Option value="FL">Florida</Option>
           <Option value="GA">Georgia</Option>
@@ -205,175 +282,54 @@ class ScientistPage extends React.Component {
           <Option value="WA">Washington</Option>
         </Select>
         &nbsp;
-<Button>Search</Button>
-<br/>
-<Row>
-<Radio.Group defaultValue='Price' buttonStyle="outline">
-<Radio.Button value='Price'>Price</Radio.Button>
-<Radio.Button value='Rating'>Rating</Radio.Button>
-</Radio.Group>
-</Row>
-<br/>
-<Bar {...{
-  data: [
-    {
-      country: '$',
-      year: 'Norfolk',
-      value: 502,
-    },
-    {
-      country: '$',
-      year: 'Middlesex',
-      value: 635,
-    },
-    {
-      country: '$',
-      year: 'Plymouth',
-      value: 809,
-    },
-    {
-      country: '$',
-      year: 'Essex',
-      value: 947,
-    },
-    {
-      country: '$',
-      year: 'Suffolk',
-      value: 1402,
-    },
-    {
-      country: '$',
-      year: 'Worcester',
-      value: 3634,
-    },
-    {
-      country: '$',
-      year: 'Franklin',
-      value: 5268,
-    },
-    {
-      country: '$$',
-      year: 'Norfolk',
-      value: 106,
-    },
-    {
-      country: '$$',
-      year: 'Middlesex',
-      value: 107,
-    },
-    {
-      country: '$$',
-      year: 'Plymouth',
-      value: 111,
-    },
-    {
-      country: '$$',
-      year: 'Essex',
-      value: 133,
-    },
-    {
-      country: '$$',
-      year: 'Suffolk',
-      value: 221,
-    },
-    {
-      country: '$$',
-      year: 'Worcester',
-      value: 767,
-    },
-    {
-      country: '$$',
-      year: 'Franklin',
-      value: 1766,
-    },
-    {
-      country: '$$$',
-      year: 'Norfolk',
-      value: 163,
-    },
-    {
-      country: '$$$',
-      year: 'Middlesex',
-      value: 203,
-    },
-    {
-      country: '$$$',
-      year: 'Plymouth',
-      value: 276,
-    },
-    {
-      country: '$$$',
-      year: 'Essex',
-      value: 408,
-    },
-    {
-      country: '$$$',
-      year: 'Suffolk',
-      value: 547,
-    },
-    {
-      country: '$$$',
-      year: 'Worcester',
-      value: 729,
-    },
-    {
-      country: '$$$',
-      year: 'Franklin',
-      value: 628,
-    },
-    {
-      country: '$$$$',
-      year: 'Norfolk',
-      value: 163,
-    },
-    {
-      country: '$$$$',
-      year: 'Middlesex',
-      value: 203,
-    },
-    {
-      country: '$$$$',
-      year: 'Plymouth',
-      value: 276,
-    },
-    {
-      country: '$$$$',
-      year: 'Essex',
-      value: 408,
-    },
-    {
-      country: '$$$$',
-      year: 'Suffolk',
-      value: 547,
-    },
-    {
-      country: '$$$$',
-      year: 'Worcester',
-      value: 729,
-    },
-    {
-      country: '$$$$',
-      year: 'Franklin',
-      value: 628,
-    },
-  ],
-    xField: 'value',
-    yField: 'year',
-    seriesField: 'country',
-    isPercent: true,
-    isStack: true,
+        <Button onClick={this.updateHealthData}>Search</Button>
+        <br/>
+        {this.state.healthData.length == 0 ? null :
+        <Tabs style={{marginLeft: 20, marginRight: 20}}>
+        <TabPane tab='Price' key='price'>
+        <Bar {...{
+          data: [...this.state.healthDataPrice],
+            xField: 'value',
+            yField: 'county',
+            seriesField: 'price',
+            isPercent: true,
+            isStack: true,
 
-    /** 自定义颜色 */
-    // color: ['#2582a1', '#f88c24', '#c52125', '#87f4d0'],
-    label: {
-      position: 'middle',
-      content: (item) => {
-        return item.value.toFixed(2);
-      },
-      style: {
-        fill: '#fff',
-      },
-    }}}/>
+            label: {
+              position: 'middle',
+              content: (item) => {
+                return item.value.toFixed(2);
+              },
+              style: {
+                fill: '#fff',
+              }
+            },
+
+          }
+        }/>
+        </TabPane>
+        <TabPane tab='Rating' key='rating'>
+        <Bar {...{
+            data: [...this.state.healthDataRating],
+            xField: 'value',
+            yField: 'county',
+            seriesField: 'rating',
+            isPercent: true,
+            isStack: true,
+            label: {
+              position: 'middle',
+              content: (item) => {
+                return item.value.toFixed(2);
+              },
+              style: {
+                fill: '#fff',
+              }
+            }
+          }
+        }/>
+        </TabPane>
+        </Tabs>
+      }
         </div>
       )
     }
