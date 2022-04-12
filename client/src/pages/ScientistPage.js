@@ -307,6 +307,8 @@ class ScientistPage extends React.Component {
 
           }
         }/>
+        <p>* The counties above are ordered by their respective health ranking according to data published by <i>The County Health Rankings & Roadmaps</i>, a program of the University of Wisconsin Population Health Institute.
+        <br/>The counties closer to the top have higher health rankings. The counties closer to the bottom have lower health rankings</p>
         </TabPane>
         <TabPane tab='Rating' key='rating'>
         <Bar {...{
@@ -327,6 +329,8 @@ class ScientistPage extends React.Component {
             }
           }
         }/>
+        <p>* The counties above are ordered by their respective health ranking according to data published by <i>The County Health Rankings & Roadmaps</i>, a program of the University of Wisconsin Population Health Institute.
+        <br/>The counties closer to the top have higher health rankings. The counties closer to the bottom have lower health rankings</p>
         </TabPane>
         </Tabs>
       }
