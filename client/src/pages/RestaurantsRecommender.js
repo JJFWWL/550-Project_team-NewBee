@@ -446,7 +446,7 @@ class RestaurantsRecommender extends React.Component {
                                     <FormInput placeholder={this.state.nameQuery? this.state.nameQuery : 'e.g. Bradley\'s Bar & Grill'} value={this.state.nameQuery} onChange={this.handleNameQueryChange} />
                                 </FormGroup></Col>
                                 <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
-                                    <label>Location</label>
+                                    <label>Location (* Required)</label>
                                     <br/>
                                     <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
                                     <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
@@ -486,15 +486,15 @@ class RestaurantsRecommender extends React.Component {
                         <Form style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
                           <Row>
                               <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
-                                  <label>Your name</label>
+                                  <label>Your name (* Required)</label>
                                   <FormInput placeholder={this.state.userNameQuery? this.state.userNameQuery : 'e.g. John'} value={this.state.userNameQuery} onChange={this.handleUserNameQueryChange} />
                               </FormGroup></Col>
-                              <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
-                                  <label>Last 6 digit of your user ID</label>
+                              <Col flex={2}><FormGroup style={{ width: '20vw', margin: '0 auto' }}>
+                                  <label>Last 6 digit of your user ID (* Required)</label>
                                   <FormInput placeholder={this.state.userIdQuery? this.state.userIdQuery : 'e.g. OiezZw'} value={this.state.userIdQuery} onChange={this.handleUserIdQueryChange} />
                               </FormGroup></Col>
                               <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
-                                  <label>Location</label>
+                                  <label>Location (* Required)</label>
                                   <br/>
                                   <div>{this.state.cityQuery}{this.state.stateQuery && this.state.cityQuery? ',' : ''} {this.state.stateQuery}</div>
                                   <Cascader options={locationOptions} onChange={this.handleLocationQueryChange}>
