@@ -104,7 +104,6 @@ class FriendsPage extends React.Component {
 
     updateLoginResult() {
         getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
-            console.log(res.results[0]);
             this.setState({
                 userIDQuery: res.results[0].user_id
             })

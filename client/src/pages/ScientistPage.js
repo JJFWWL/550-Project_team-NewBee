@@ -14,7 +14,7 @@ import {
     Button,
     Radio
 } from 'antd'
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, StarFilled, DollarOutlined, CompassFilled } from '@ant-design/icons';
 import { RadialChart } from 'react-vis';
 import { format } from 'd3-format';
 
@@ -166,11 +166,11 @@ class ScientistPage extends React.Component {
                             }
                         }
                         }
-                    // render={(text, record) => (
-                    //     <Space size="middle">
-                    //         <a href='#section2' >{record.city}</a>
-                    //     </Space>
-                    // )}
+                        render={(text, record) => (
+                            <Space size="middle">
+                                <a href='#section2' >{record.city}</a>
+                            </Space>
+                        )}
                     />
                     <Column title="1 Star Count" dataIndex="1star_count" key="1star_count" />
                     <Column title="1 Star Percentage" dataIndex="1star_percent" key="1star_percent" />
@@ -184,6 +184,35 @@ class ScientistPage extends React.Component {
                     <Column title="5 Star Percentage" dataIndex="5star_percent" key="5star_percent" />
                 </Table>
                 <Divider />
+                <RadialChart
+                    data={[
+                        {
+                            angle: 20,
+                            label: 'deck.gl'
+                        },
+                        {
+                            angle: 20,
+                            label: 'math.gl'
+                        },
+                        {
+                            angle: 22,
+                            label: 'probe.gl'
+                        },
+                        {
+                            angle: 6,
+                            label: 'vis.gl'
+                        },
+                        {
+                            angle: 14,
+                            label: 'react-map-gl'
+                        }
+                    ]}
+                    labelsRadiusMultiplier={1.1}
+                    labelsStyle={{
+                        fontSize: 12
+                    }}
+                    showLabels
+                />
             </Row>
 
         </div>
