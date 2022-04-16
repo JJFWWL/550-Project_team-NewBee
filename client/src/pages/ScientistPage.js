@@ -145,6 +145,7 @@ class ScientistPage extends React.Component {
             healthData: [],
             healthDataPrice: [],
             healthDataRating: [],
+            loadings: []
         }
 
         this.handleRegionQueryChange = this.handleRegionQueryChange.bind(this)
@@ -161,6 +162,27 @@ class ScientistPage extends React.Component {
 
         this.updateHealthData = this.updateHealthData.bind(this)
     }
+
+    enterLoading = index => {
+      this.setState(({ loadings }) => {
+        const newLoadings = [...loadings];
+        newLoadings[index] = true;
+
+        return {
+          loadings: newLoadings,
+        };
+      });
+      setTimeout(() => {
+        this.setState(({ loadings }) => {
+          const newLoadings = [...loadings];
+          newLoadings[index] = false;
+
+          return {
+            loadings: newLoadings,
+          };
+        });
+      }, 30000);
+    };
 
     handleRegionQueryChange(value) {
         this.setState({
@@ -383,6 +405,7 @@ class ScientistPage extends React.Component {
                 healthData: res.results,
                 healthDataPrice: priceData,
                 healthDataRating: ratingData,
+                loadings: [false]
             })
             console.log(`${res.results.length}, and ${this.state.healthDataPrice.length}`)
             console.log(`${this.state.healthDataPrice[0].price}, and ${this.state.healthDataPrice[0].county}, and ${this.state.healthDataPrice[0].value}`)
@@ -814,6 +837,7 @@ class ScientistPage extends React.Component {
 
 
     healthTab() {
+        const { loadings } = this.state;
         return (
             <div style={{ textAlign: 'center' }}>
                 <Select placeholder='Select a state' style={{ width: 150 }} onChange={this.handleHealthStateQueryChange}>
@@ -827,7 +851,7 @@ class ScientistPage extends React.Component {
                     <Option value="WA">Washington</Option>
                 </Select>
                 &nbsp;
-                <Button onClick={this.updateHealthData}>Search</Button>
+                <Button onClick={()=>{this.enterLoading(0);this.updateHealthData();}} loading={loadings[0]}>Search</Button>
                 <br />
                 {this.state.healthData.length == 0 ? null :
                     <Tabs style={{ marginLeft: 20, marginRight: 20 }}>
@@ -884,6 +908,7 @@ class ScientistPage extends React.Component {
     }
 
     render() {
+
         return (
             <div>
                 <MenuBar />
