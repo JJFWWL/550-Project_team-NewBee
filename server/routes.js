@@ -386,6 +386,90 @@ async function friend_connection(req, res) {
   }
 }
 
+// Route 2.4 (hoptional)
+//only do 1 connection, limit 20 business, select only user with most review connected to one business
+//extra business:aS3Fhk3YHgLvyqM98augMA
+//http://localhost:8080/friends/friend_one/Pf7FI0OukC_CEcCz0ZxoUw/?page=2&pagesize=5
+//http://localhost:8080/friends/friend_one/Pf7FI0OukC_CEcCz0ZxoUw/
+
+async function friend_one(req, res) {
+  const ID = req.params.id ? req.params.id : "Pf7FI0OukC_CEcCz0ZxoUw"
+  
+
+  if (req.query.page && !isNaN(req.query.page)) {
+    const page = parseInt(req.query.page);
+    const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
+    const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
+
+    
+    connection.query(
+
+      `WITH ZERO_B AS(
+        SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
+    FROM review RP JOIN Business ON RP.business_id=Business.business_id
+    WHERE RP.user_id='${ID}' AND RP.stars=5
+    LIMIT 20
+    ),
+    ONE AS(SELECT DISTINCT user.name as name,user.user_id as user_id, ZERO_B.business_id as business_id,ZERO_B.name as business_name,user.review_count as review_count
+    FROM ZERO_B JOIN review ON ZERO_B.business_id=review.business_id
+                JOIN user ON review.user_id=user.user_id
+    WHERE review.stars=5 AND review.user_id!='${ID}')
+    ,
+    ADDED_ROW AS(
+        SELECT *,ROW_NUMBER() OVER(PARTITION BY business_id ORDER BY review_count DESC) as rn
+        FROM ONE
+        )
+        SELECT name,user_id,business_id,business_name
+        FROM ADDED_ROW
+        WHERE rn=1
+      ORDER BY N ${stringLimit}`,
+
+      function (error, results, fields) {
+        if (error) {
+          console.log(error);
+          res.json({ error: error });
+        } else if (results) {
+          res.json({ results: results });
+        } else {
+          res.json({ results: [] });
+        }
+      }
+    );
+
+  } else {
+    // we have implemented this for you to see how to return results by querying the database
+
+    connection.query(`WITH ZERO_B AS(
+      SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
+  FROM review RP JOIN Business ON RP.business_id=Business.business_id
+  WHERE RP.user_id='${ID}' AND RP.stars=5
+  LIMIT 20
+  ),
+  ONE AS(SELECT DISTINCT user.name as name,user.user_id as user_id, ZERO_B.business_id as business_id,ZERO_B.name as business_name,user.review_count as review_count
+  FROM ZERO_B JOIN review ON ZERO_B.business_id=review.business_id
+              JOIN user ON review.user_id=user.user_id
+  WHERE review.stars=5 AND review.user_id!='${ID}')
+  ,
+  ADDED_ROW AS(
+      SELECT *,ROW_NUMBER() OVER(PARTITION BY business_id ORDER BY review_count DESC) as rn
+      FROM ONE
+      )
+      SELECT name,user_id,business_id,business_name
+      FROM ADDED_ROW
+      WHERE rn=1`, function (error, results, fields) {
+
+      if (error) {
+        console.log(error)
+        res.json({ error: error })
+      } else if (results) {
+        res.json({ results: results })
+      } else {
+        res.json({ results: [] });
+      }
+    });
+  }
+}
+
 //page 3.1 star distribution_state level(input state name)
 //http://localhost:8080/star_sci/state/?name=OR&page=2&pagesize=5
 //http://localhost:8080/star_sci/city/?name=Boston
@@ -875,6 +959,7 @@ module.exports = {
   login,
   friend_business,
   friend_connection,
+  friend_one,
   star_sci,
   price_sci,
   avg_sci,
