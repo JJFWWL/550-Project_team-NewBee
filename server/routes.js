@@ -292,7 +292,7 @@ async function friend_connection(req, res) {
     ),
       ONE AS (
 
-          SELECT DISTINCT RP.user_id, user.name, 1 AS N
+          SELECT DISTINCT RP.user_id, user.name, user.review_count, user.yelping_since, 1 AS N
           FROM review RP
                    JOIN user ON RP.user_id = user.user_id
           WHERE RP.stars = 5
@@ -307,7 +307,7 @@ async function friend_connection(req, res) {
       
               ),
           TWO AS (
-          SELECT DISTINCT review.user_id, user.name, 2 AS N
+          SELECT DISTINCT review.user_id, user.name,user.review_count, user.yelping_since, 2 AS N
           FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
           JOIN user ON review.user_id= user.user_id
           WHERE review.stars=5  AND review.user_id!='${userID}'
@@ -318,7 +318,7 @@ async function friend_connection(req, res) {
          UNION ALL
          SELECT * FROM TWO
           )
-      SELECT user_id, name, MIN(N) AS N FROM TOT
+      SELECT user_id, name,review_count, yelping_since, MIN(N) AS N FROM TOT
       GROUP BY user_id
       ORDER BY N ${stringLimit}`,
 
@@ -344,7 +344,7 @@ async function friend_connection(req, res) {
   ),
     ONE AS (
 
-        SELECT DISTINCT RP.user_id, user.name, 1 AS N
+        SELECT DISTINCT RP.user_id, user.name, user.review_count, user.yelping_since,1 AS N
         FROM review RP
                  JOIN user ON RP.user_id = user.user_id
         WHERE RP.stars = 5
@@ -359,7 +359,7 @@ async function friend_connection(req, res) {
     
             ),
         TWO AS (
-        SELECT DISTINCT review.user_id, user.name, 2 AS N
+        SELECT DISTINCT review.user_id, user.name,user.review_count, user.yelping_since, 2 AS N
         FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
         JOIN user ON review.user_id= user.user_id
         WHERE review.stars=5  AND review.user_id!='${userID}'
@@ -370,7 +370,7 @@ async function friend_connection(req, res) {
        UNION ALL
        SELECT * FROM TWO
         )
-    SELECT user_id, name, MIN(N) AS N FROM TOT
+    SELECT user_id, name,review_count, yelping_since, MIN(N) AS N FROM TOT
     GROUP BY user_id
     ORDER BY N `, function (error, results, fields) {
 
@@ -488,7 +488,8 @@ async function star_sci(req, res) {
             SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
             FROM BusinessFull
             WHERE state='${name}' 
-            GROUP BY city ${stringLimit}`,
+            GROUP BY city
+            HAVING COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -509,7 +510,8 @@ async function star_sci(req, res) {
           SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
           FROM BusinessFull
           WHERE city='${name}' 
-          GROUP BY postal_code ${stringLimit}`,
+          GROUP BY postal_code
+          HAVING COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -529,6 +531,7 @@ async function star_sci(req, res) {
           FROM BusinessFull
           WHERE postal_code='${name}' 
           GROUP BY stars
+          HAVING COUNT(business_id)>=10
           ORDER BY stars ${stringLimit}`,
 
         function (error, results, fields) {
@@ -556,7 +559,8 @@ async function star_sci(req, res) {
         SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
         FROM BusinessFull
         WHERE state='${name}'
-        GROUP BY city`,
+        GROUP BY city
+        HAVING COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -577,7 +581,8 @@ async function star_sci(req, res) {
       SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
       FROM BusinessFull
       WHERE city='${name}' 
-      GROUP BY postal_code`,
+      GROUP BY postal_code
+      HAVING COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -597,6 +602,7 @@ async function star_sci(req, res) {
       FROM BusinessFull
       WHERE postal_code='${name}'
       GROUP BY stars
+      HAVING COUNT(business_id)>=10
       ORDER BY stars;`,
 
         function (error, results, fields) {
@@ -635,7 +641,7 @@ async function price_sci(req, res) {
             FROM BusinessFull
             WHERE State='${name}'
             GROUP BY city
-            HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 ${stringLimit}`,
+            HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -657,7 +663,7 @@ async function price_sci(req, res) {
           FROM BusinessFull
           WHERE city='${name}'
           GROUP BY postal_code
-          HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 ${stringLimit}`,
+          HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -677,6 +683,7 @@ async function price_sci(req, res) {
           FROM BusinessFull
           WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
           GROUP BY RestaurantsPriceRange2
+          AND COUNT(business_id)>=10
           ORDER BY RestaurantsPriceRange2 ${stringLimit}`,
 
         function (error, results, fields) {
@@ -705,7 +712,7 @@ async function price_sci(req, res) {
         FROM BusinessFull
         WHERE State='${name}'
         GROUP BY city
-        HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0`,
+        HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -727,7 +734,7 @@ async function price_sci(req, res) {
       FROM BusinessFull
       WHERE city='${name}'
       GROUP BY postal_code
-      HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0`,
+      HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -747,6 +754,7 @@ async function price_sci(req, res) {
       FROM BusinessFull
       WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
       GROUP BY RestaurantsPriceRange2
+      AND COUNT(business_id)>=10
       ORDER BY RestaurantsPriceRange2`,
 
         function (error, results, fields) {
