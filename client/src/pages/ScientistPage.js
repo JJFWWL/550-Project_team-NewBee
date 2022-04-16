@@ -1,21 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Input, Table, Cascader, Select, Row, Col, Divider, Space, Tabs, Button } from 'antd'
+import { SearchOutlined, StarFilled } from '@ant-design/icons';
+import { Bar, Pie, measureTextWidth } from '@ant-design/plots';
 
-import {
-    Form,
-    Input,
-    Table,
-    Cascader,
-    Select,
-    Row,
-    Col,
-    Divider,
-    Space,
-    Tabs,
-    Button,
-    Radio
-} from 'antd'
-import { SearchOutlined } from '@ant-design/icons';
-import { Bar } from '@ant-design/plots';
+import { AreaMap } from '@ant-design/maps';
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
@@ -23,8 +12,6 @@ import {
     getStarDistribution,
     getPriceDistribution,
     getAverageRating,
-    getAveragePrice,
-    getBusinessPercentage,
     getHealthData
 } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
@@ -63,27 +50,7 @@ const CityOptions = [
             { value: 'Beverly', label: 'Beverly' }
         ]
     },
-    {   //Portland,13614
-        // Beaverton,1721
-        // Tigard,751
-        // Lake Oswego,590
-        // Milwaukie,363
-        // Clackamas,357
-        // Happy Valley,331
-        // Tualatin,296
-        // Hillsboro,261
-        // Oregon City,189
-        // West Linn,144
-        // Aloha,121
-        // Gresham,84
-        // Gladstone,73
-        // Oak Grove,26
-        // Damascus,16
-        // King City,14
-        // Fairview,4
-        // Durham,4
-        // Milwaukee,3
-
+    {
         value: 'OR',
         label: 'Oregon',
         children: [
@@ -109,27 +76,7 @@ const CityOptions = [
             { value: 'Milwaukee', label: 'Milwaukee' }
         ]
     },
-    {   //Austin,15959
-        // Lakeway,250
-        // Buda,225
-        // Bee Cave,217
-        // Kyle,191
-        // Dripping Springs,167
-        // Pflugerville,92
-        // West Lake Hills,84
-        // Sunset Valley,66
-        // Manor,46
-        // Del Valle,37
-        // Manchaca,32
-        // Leander,15
-        // Driftwood,15
-        // Spicewood,14
-        // Rollingwood,12
-        // Round Rock,8
-        // Westlake Hills,7
-        // Creedmoor,6
-        // Bee Caves,4
-
+    {
         value: 'TX',
         label: 'Texas',
         children: [
@@ -155,16 +102,7 @@ const CityOptions = [
             { value: 'Bee Caves', label: 'Bee Caves' }
         ]
     },
-    {   //Vancouver,2322
-        // Camas,64
-        // Hazel Dell,4
-        // Portland,3
-        // Ridgefield,3
-        // Orchards,3
-        // Beaverton,2
-        // Vancover,1
-        // Felida,1
-
+    {
         value: 'WA',
         label: 'Washington',
         children: [
@@ -186,17 +124,23 @@ class ScientistPage extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            regionQuery: 'state',
+            regionQuery: '',
             stateNameQuery: '',
             cityNameQuery: '',
             zipNameQuery: '',
             starDistribution: [],
-            stateStarDistribution: [],
-            cityStarDistribution: [],
-            zipStarDistribution: [],
-            starBarPlotData: [],
-            starBarPlotData2: [],
-            starBarPlotData3: [],
+            priceDistribution: [],
+            averageRating: [],
+
+            starBarPlot: [],
+            starDonutPlot: [],
+
+            data: {
+                mapType: '',
+                features: [],
+            },
+
+
             healthStateQuery: '',
             healthData: [],
             healthDataPrice: [],
@@ -213,6 +157,8 @@ class ScientistPage extends React.Component {
         this.handleHealthStateQueryChange = this.handleHealthStateQueryChange.bind(this)
 
         this.UpdateStarDistribution = this.UpdateStarDistribution.bind(this)
+        this.UpdatePrice = this.UpdatePrice.bind(this)
+
         this.updateHealthData = this.updateHealthData.bind(this)
     }
 
@@ -230,14 +176,13 @@ class ScientistPage extends React.Component {
 
     handleCityNameQueryChange(value) {
         this.setState({
-            cityNameQuery: value
+            cityNameQuery: value[1]
         })
     }
 
-    handleZipNameQueryChange(value) {
-        this.setState({
-            zipNameQuery: value
-        })
+    handleZipNameQueryChange(e) {
+
+        this.setState({ zipNameQuery: e.target.value })
     }
 
     handleHealthStateQueryChange(value) {
@@ -262,74 +207,110 @@ class ScientistPage extends React.Component {
         }
     }
 
+    getStarBarPlot(title, type) {
+        let result = [];
+        console.log("title is " + title);
+        let starCount = ["", "1star_count", "2star_count", "3star_count", "4star_count", "5star_count"];
+        let priceCount = ["", "1price_count", "2price_count", "3price_count", "4price_count", "5price_count"];
+        let countKey = type === 'star' ? starCount : priceCount;
 
-    UpdateStarDistribution(value) {
+        for (let i = 0; i < this.state.starDistribution.length; i++) {
+            let element = this.state.starDistribution[i];
+            var sum = element[countKey[1]] + element[countKey[2]] + element[countKey[3]] + element[countKey[4]] + element[countKey[5]];
+            result.push({ "title": element[title], "stars": "*", "count": element[countKey[1]], "sum": sum });
+            result.push({ "title": element[title], "stars": "**", "count": element[countKey[2]], "sum": sum });
+            result.push({ "title": element[title], "stars": "***", "count": element[countKey[3]], "sum": sum });
+            result.push({ "title": element[title], "stars": "****", "count": element[countKey[4]], "sum": sum });
+            result.push({ "title": element[title], "stars": "*****", "count": element[countKey[5]], "sum": sum });
+        }
+
+        result = result.sort(function (a, b) {
+            return b.sum - a.sum;
+        });
+        console.log("starResult is :" + result);
+        this.setState({
+            starBarPlot: result.slice(0, 50)
+        })
+
+    }
+
+    UpdateStarDistribution() {
+        this.state.starDistribution = [];
         var NameQuery = '';
         var title = '';
-        var starResult = [];
         if (this.state.regionQuery === 'state') {
             NameQuery = this.state.stateNameQuery;
             title = 'city';
-            getStarDistribution('state', NameQuery, null, null).then(res => {
-                this.setState({
-                    starDistribution: res.results
-                })
-            })
-            for (var i = 0; i < this.state.starDistribution.length; i++) {
-                var element = this.state.starDistribution[i];
-                var sum = element["1star_count"] + element["2star_count"] + element["3star_count"] + element["4star_count"] + element["5star_count"];
-                console.log("sum is : " + sum);
-                starResult.push({ "title": element[title], "stars": "$", "count": element["1star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$", "count": element["2star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$$", "count": element["3star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$$$", "count": element["4star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$$$", "count": element["5star_count"], "sum": sum });
-            }
         } else if (this.state.regionQuery === 'city') {
-            NameQuery = value[1];
+            NameQuery = this.state.cityNameQuery;
             title = 'postal_code';
-            getStarDistribution('city', NameQuery, null, null).then(res => {
-                this.setState({
-                    cityStarDistribution: res.results
-                })
-            })
-            for (let element of this.state.cityStarDistribution) {
-                var sum = element["1star_count"] + element["2star_count"] + element["3star_count"] + element["4star_count"] + element["5star_count"];
-                console.log("sum is : " + sum);
-                starResult.push({ "title": element[title], "stars": "$", "count": element["1star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$", "count": element["2star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$$", "count": element["3star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$$$", "count": element["4star_count"], "sum": sum });
-                starResult.push({ "title": element[title], "stars": "$$$$", "count": element["5star_count"], "sum": sum });
-            }
         } else if (this.state.regionQuery === 'zip') {
-            NameQuery = this.state.zipNameQuery
+            NameQuery = this.state.zipNameQuery;
         }
-        console.log("region query is :" + this.state.regionQuery);
-        console.log("NameQuery is :" + NameQuery);
-
-        starResult = starResult.sort(function (a, b) {
-            return b.sum - a.sum;
-        });
-        console.log("starResult is :" + starResult);
-
-        this.setState({
-            starBarPlotData: starResult.slice(0, 50)
-        })
+        if (this.state.regionQuery === 'state' || this.state.regionQuery === 'city') {
+            getStarDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
+                this.setState({ starDistribution: res.results }, () => {
+                    this.getStarBarPlot(title, 'star');
+                }
+                )
+            });
+        } else if (this.state.regionQuery === 'zip') {
+            console.log("regionQuery is " + this.state.regionQuery);
+            console.log("zipNameQuery is " + this.state.zipNameQuery);
+            this.state.starDonutPlot = [];
+            getStarDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
+                this.setState({ starDonutPlot: res.results });
+                console.log("starDonutPlot is :" + this.state.starDonutPlot);
+            });
+        }
     }
 
-
-    UpdateCityLevelStarDistribution(value) {
-        this.handleCityNameQueryChange(value)
-        getStarDistribution("city", this.state.cityQuery, null, null).then(res => {
-            this.setState({
-                starDistribution: res.results
-            })
-        })
-
+    UpdatePrice() {
+        var NameQuery = '';
+        var title = '';
+        if (this.state.regionQuery === 'state') {
+            NameQuery = this.state.stateNameQuery;
+            title = 'city';
+        } else if (this.state.regionQuery === 'city') {
+            NameQuery = this.state.cityNameQuery;
+            title = 'postal_code';
+        } else if (this.state.regionQuery === 'zip') {
+            NameQuery = this.state.zipNameQuery;
+        }
+        if (this.state.regionQuery === 'state' || this.state.regionQuery === 'city') {
+            getPriceDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
+                this.setState({ starDistribution: res.results }, () => {
+                    this.getStarBarPlot(title, 'price');
+                }
+                )
+            });
+        } else if (this.state.regionQuery === 'zip') {
+            console.log("regionQuery is " + this.state.regionQuery);
+            console.log("zipNameQuery is " + this.state.zipNameQuery);
+            this.state.starDonutPlot = [];
+            getPriceDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
+                let result = [];
+                for (let i = 0; i < res.results.length; i++) {
+                    let element = res.results[i];
+                    if (i === 0) { result.push({ 'price': '$', 'percent': element.percent }); }
+                    else if (i === 1) { result.push({ 'price': '$$', 'percent': element.percent }); }
+                    else if (i === 2) { result.push({ 'price': '$$$', 'percent': element.percent }); }
+                    else if (i === 3) { result.push({ 'price': '$$$$', 'percent': element.percent }); }
+                    else if (i === 4) { result.push({ 'price': '$$$$$', 'percent': element.percent }); }
+                }
+                this.setState({ starDonutPlot: result });
+                console.log("starDonutPlot is :" + this.state.starDonutPlot);
+            });
+        }
     }
+
 
     handleTabChange(key) {
+        this.setState({
+            starDistribution: [],
+            starBarPlot: [],
+        });
+
         if (key === 'state') {
             this.setState({
                 regionQuery: 'state'
@@ -340,11 +321,10 @@ class ScientistPage extends React.Component {
             })
         } else if (key === 'postal_code') {
             this.setState({
-                regionQuery: 'postal_code'
+                regionQuery: 'zip'
             })
         }
     }
-
 
     updateHealthData() {
         getHealthData(this.state.healthStateQuery, null, null).then(res => {
@@ -414,6 +394,92 @@ class ScientistPage extends React.Component {
     }
 
 
+    PiePlot = () => {
+        var config = {
+            appendPadding: 10,
+            data: this.state.starDonutPlot,
+            angleField: 'count',
+            colorField: 'stars',
+            radius: 1,
+            innerRadius: 0.6,
+            label: {
+                type: 'inner',
+                offset: '-50%',
+                style: {
+                    textAlign: 'center',
+                    fontSize: 14,
+                },
+            },
+            interactions: [
+                {
+                    type: 'element-selected',
+                },
+                {
+                    type: 'element-active',
+                },
+            ],
+            statistic: {
+                title: false,
+                content: {
+                    style: {
+                        whiteSpace: 'pre-wrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    },
+                    content: 'Business Rating',
+                },
+            },
+        };
+
+        return <Pie {...config} />;
+    };
+
+    pricePiePlot = () => {
+        var config = {
+            appendPadding: 10,
+            data: this.state.starDonutPlot,
+            angleField: 'percent',
+            colorField: 'stars',
+            radius: 1,
+            innerRadius: 0.6,
+            // meta: {
+            //     percent: {
+            //         formatter: (v) => `${v * 100} %`,
+            //     },
+            // },
+            label: {
+                type: 'inner',
+                offset: '-50%',
+                // content: (d) => `${d.RestaurantsPriceRange2}`,
+                style: {
+                    textAlign: 'center',
+                    fontSize: 14,
+                },
+            },
+            interactions: [
+                {
+                    type: 'element-selected',
+                },
+                {
+                    type: 'element-active',
+                },
+            ],
+            statistic: {
+                title: false,
+                content: {
+                    style: {
+                        whiteSpace: 'pre-wrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    },
+                    content: 'Price',
+                },
+            },
+        };
+
+        return <Pie {...config} />;
+    };
+
 
     ratingTab = () => (
         <div>
@@ -422,7 +488,7 @@ class ScientistPage extends React.Component {
             </Row>
             <Row justify='center' >
                 <Tabs defaultActiveKey="state" centered type="card" size='large' onChange={this.handleTabChange}>
-                    <TabPane tab="State" key="state"  >
+                    <TabPane tab="State" key="state" >
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
@@ -441,46 +507,31 @@ class ScientistPage extends React.Component {
                                 </Button>
                             </Space>
                         </Row>
-
-                        {this.state.starBarPlotData.length == 0 ? null :
-                            <Bar {...{
-                                data: this.state.starBarPlotData,
-                                xField: 'count',
-                                yField: 'title',
-                                seriesField: 'stars',
-                                isPercent: true,
-                                isStack: true,
-                                autoFit: true,
-                                width: 1600,
-                                // padding: [30, 100, 80, 80],
-                                label: {
-                                    position: 'middle',
-                                    content: (item) => {
-                                        return item.count.toFixed(2);
-                                    },
-                                    style: {
-                                        fill: '#fff',
-                                    }
-                                },
-                            }
-                            } />
-                        }
-                    </TabPane>
-                    <TabPane tab="City" key="city" >
                         <Row justify='center'>
-                            <Cascader options={CityOptions} onChange={this.UpdateStarDistribution} placeholder="Please select" />
-                            <Divider />
-                            {this.state.starBarPlotData.length == 0 ? null :
-                                <Bar {...{
-                                    data: this.state.starBarPlotData,
+                            <h3>State: {this.state.stateNameQuery}</h3>
+                        </Row>
+                        <Row>
+                            {this.state.starBarPlot == 0 ? null :
+                                < Bar {...{
+                                    data: this.state.starBarPlot,
                                     xField: 'count',
                                     yField: 'title',
                                     seriesField: 'stars',
                                     isPercent: true,
                                     isStack: true,
                                     autoFit: true,
-                                    width: 1600,
+                                    width: 1200,
                                     // padding: [30, 100, 80, 80],
+                                    xAxis: {
+                                        title: {
+                                            text: 'Percentage',
+                                        },
+                                    },
+                                    yAxis: {
+                                        title: {
+                                            text: 'City',
+                                        },
+                                    },
                                     label: {
                                         position: 'middle',
                                         content: (item) => {
@@ -491,12 +542,196 @@ class ScientistPage extends React.Component {
                                         }
                                     }
                                 }
-                                } />
+                                }
+                                />
                             }
                         </Row>
                     </TabPane>
+                    <TabPane tab="City" key="city" >
+                        <Row justify='center'>
+                            <Space>
+                                <h4>Select a state:   </h4>
+                                <Cascader options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+                                <Button type="primary" size="medium" onClick={this.UpdateStarDistribution}>Search</Button>
+                            </Space>
+                        </Row>
+
+                        {this.state.starBarPlot.length == 0 ? null :
+                            < Bar {...{
+                                data: this.state.starBarPlot,
+                                xField: 'count',
+                                yField: 'title',
+                                seriesField: 'stars',
+                                isPercent: true,
+                                isStack: true,
+                                autoFit: true,
+                                width: 1200,
+                                // padding: [30, 100, 80, 80],
+                                xAxis: {
+                                    title: {
+                                        text: 'Percentage',
+                                    },
+                                },
+                                yAxis: {
+                                    title: {
+                                        text: 'Postal Code',
+                                    },
+                                },
+                                label: {
+                                    position: 'middle',
+                                    content: (item) => {
+                                        return item.count.toFixed(2);
+                                    },
+                                    style: {
+                                        fill: '#fff',
+                                    }
+                                }
+                            }
+                            }
+                            />
+                        }
+                    </TabPane>
                     <TabPane tab="Postal Code" key="postal_code">
-                        Content of Tab Pane 3
+                        <Row justify='center'>
+                            <Space>
+                                <h4>Input Zip Code:  </h4>
+                                <Input placeholder="input search text" allowClear enterButton="Search" size="large" onChange={this.handleZipNameQueryChange} />
+                                <Button type="primary" size="medium" onClick={this.UpdateStarDistribution}>Search</Button>
+                            </Space>
+                        </Row>
+
+                        <Row justify='center'>
+                            {this.state.starDonutPlot == 0 ? null : this.PiePlot()}
+                        </Row>
+                    </TabPane>
+                </Tabs>
+            </Row>
+            <Divider />
+        </div>
+    );
+
+    priceTab = () => (
+        <div>
+            <Row justify='center'>
+                <h4>Business Price Scope: </h4>
+            </Row>
+            <Row justify='center' >
+                <Tabs defaultActiveKey="state" centered type="card" size='large' onChange={this.handleTabChange}>
+                    <TabPane tab="State" key="state" >
+                        <Row justify='center'>
+                            <Space>
+                                <h4>Select a state:   </h4>
+                                <Select
+                                    defaultValue={"MA"}
+                                    onChange={this.handleStateNameQueryChange}
+                                >
+                                    <Option value="MA">Massachusetts</Option>
+                                    <Option value="OH">Ohio</Option>
+                                    <Option value="OR">Oregon</Option>
+                                    <Option value="TX">Texas</Option>
+                                    <Option value="WA">Washington</Option>
+                                </Select>
+                                <Button type="primary" icon={<SearchOutlined />} size="medium" onClick={this.UpdatePrice}>
+                                    Search
+                                </Button>
+                            </Space>
+                        </Row>
+                        <Row justify='center'>
+                            <h3>State: {this.state.stateNameQuery}</h3>
+                        </Row>
+                        <Row>
+                            {this.state.starBarPlot == 0 ? null :
+                                < Bar {...{
+                                    data: this.state.starBarPlot,
+                                    xField: 'count',
+                                    yField: 'title',
+                                    seriesField: 'stars',
+                                    isPercent: true,
+                                    isStack: true,
+                                    autoFit: true,
+                                    width: 1200,
+                                    // padding: [30, 100, 80, 80],
+                                    xAxis: {
+                                        title: {
+                                            text: 'Percentage',
+                                        },
+                                    },
+                                    yAxis: {
+                                        title: {
+                                            text: 'City',
+                                        },
+                                    },
+                                    label: {
+                                        position: 'middle',
+                                        content: (item) => {
+                                            return item.count.toFixed(2);
+                                        },
+                                        style: {
+                                            fill: '#fff',
+                                        }
+                                    }
+                                }
+                                }
+                                />
+                            }
+                        </Row>
+                    </TabPane>
+                    <TabPane tab="City" key="city" >
+                        <Row justify='center'>
+                            <Space>
+                                <h4>Select a state:   </h4>
+                                <Cascader options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+                                <Button type="primary" size="medium" onClick={this.UpdatePrice}>Search</Button>
+                            </Space>
+                        </Row>
+
+                        {this.state.starBarPlot.length == 0 ? null :
+                            < Bar {...{
+                                data: this.state.starBarPlot,
+                                xField: 'count',
+                                yField: 'title',
+                                seriesField: 'stars',
+                                isPercent: true,
+                                isStack: true,
+                                autoFit: true,
+                                width: 1200,
+                                // padding: [30, 100, 80, 80],
+                                xAxis: {
+                                    title: {
+                                        text: 'Percentage',
+                                    },
+                                },
+                                yAxis: {
+                                    title: {
+                                        text: 'Postal Code',
+                                    },
+                                },
+                                label: {
+                                    position: 'middle',
+                                    content: (item) => {
+                                        return item.count.toFixed(2);
+                                    },
+                                    style: {
+                                        fill: '#fff',
+                                    }
+                                }
+                            }
+                            }
+                            />
+                        }
+                    </TabPane>
+                    <TabPane tab="Postal Code" key="postal_code">
+                        <Row justify='center'>
+                            <Space>
+                                <h4>Input Zip Code:  </h4>
+                                <Input placeholder="input search text" allowClear enterButton="Search" size="large" onChange={this.handleZipNameQueryChange} />
+                                <Button type="primary" size="medium" onClick={this.UpdatePrice}>Search</Button>
+                            </Space>
+                        </Row>
+
+                        <Row justify='center'>
+                            {this.state.starDonutPlot == 0 ? null : this.pricePiePlot()}
+                        </Row>
                     </TabPane>
                 </Tabs>
             </Row>
@@ -504,6 +739,78 @@ class ScientistPage extends React.Component {
 
         </div>
     );
+
+    DemoAreaMap = () => {
+        this.setState({ mapType: 'FeatureCollection', features: [] });
+        //UPDATE MAP DATA
+        //TO-DO
+        const asyncFetch = () => {
+            fetch('https://gw.alipayobjects.com/os/basement_prod/d36ad90e-3902-4742-b8a2-d93f7e5dafa2.json')
+                .then((response) => response.json())
+                .then((json) => {
+                    this.setState({ mapType: json.type, features: json.features });
+                })
+                .catch((error) => {
+                    console.log('fetch data failed', error);
+                });
+        };
+        const color = [
+            'rgb(255,255,217)',
+            'rgb(237,248,177)',
+            'rgb(199,233,180)',
+            'rgb(127,205,187)',
+            'rgb(65,182,196)',
+            'rgb(29,145,192)',
+            'rgb(34,94,168)',
+            'rgb(12,44,132)',
+        ];
+        const config = {
+            map: {
+                type: 'mapbox',
+                style: 'blank',
+                center: [120.19382669582967, 30.258134],
+                zoom: 3,
+                pitch: 0,
+            },
+            source: {
+                data: this.state.data,
+                parser: {
+                    type: 'geojson',
+                },
+            },
+            autoFit: true,
+            color: {
+                field: 'density',
+                value: color,
+                scale: {
+                    type: 'quantile',
+                },
+            },
+            style: {
+                opacity: 1,
+                stroke: 'rgb(93,112,146)',
+                lineType: 'dash',
+                lineDash: [2, 2],
+                lineWidth: 0.6,
+                lineOpacity: 1,
+            },
+            state: {
+                active: true,
+                select: true,
+            },
+            tooltip: {
+                items: ['name', 'density'],
+            },
+            zoom: {
+                position: 'bottomright',
+            },
+            legend: {
+                position: 'bottomleft',
+            },
+        };
+
+        return <AreaMap {...config} />;
+    };
 
 
     healthTab() {
@@ -578,19 +885,17 @@ class ScientistPage extends React.Component {
 
     render() {
         return (
-
             <div>
                 <MenuBar />
-
                 <Tabs defaultActiveKey="1" centered type="card" size='large' >
                     <TabPane tab="Rating" key="1">
                         {this.ratingTab()}
                     </TabPane>
                     <TabPane tab="Price" key="2">
-                        Content of Tab Pane 2
+                        {this.priceTab()}
                     </TabPane>
-                    <TabPane tab="Map" key="3">
-                        Content of Tab Pane 3
+                    <TabPane tab="Map" key="3" id='mapPage'>
+
                     </TabPane>
                     <TabPane tab="Health" key="4">
                         {this.healthTab()}
@@ -600,5 +905,4 @@ class ScientistPage extends React.Component {
         )
     }
 }
-
 export default ScientistPage

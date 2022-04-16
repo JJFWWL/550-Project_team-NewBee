@@ -51,7 +51,6 @@ const getStarDistribution = async (region, name, page, pagesize) => {
     return res.json()
 }
 
-
 const getPriceDistribution = async (region, name, page, pagesize) => {
     var res = await fetch(`http://${config.server_host}:${config.server_port}/price_sci/${region}?name=${name}&page=${page}&pagesize=${pagesize}`, {
         method: 'GET',
