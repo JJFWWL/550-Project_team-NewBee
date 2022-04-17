@@ -386,7 +386,7 @@ async function friend_connection(req, res) {
   }
 }
 
-// Route 2.4 (hoptional)
+// Route 2.4 (optional)
 //only do 1 connection, limit 20 business, select only user with most review connected to one business
 //extra business:aS3Fhk3YHgLvyqM98augMA
 //http://localhost:8080/friends/friend_one/Pf7FI0OukC_CEcCz0ZxoUw/?page=2&pagesize=5
@@ -683,7 +683,7 @@ async function price_sci(req, res) {
           FROM BusinessFull
           WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
           GROUP BY RestaurantsPriceRange2
-          AND COUNT(business_id)>=10
+          HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10
           ORDER BY RestaurantsPriceRange2 ${stringLimit}`,
 
         function (error, results, fields) {
@@ -754,7 +754,7 @@ async function price_sci(req, res) {
       FROM BusinessFull
       WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
       GROUP BY RestaurantsPriceRange2
-      AND COUNT(business_id)>=10
+      HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10
       ORDER BY RestaurantsPriceRange2`,
 
         function (error, results, fields) {
