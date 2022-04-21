@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Input, Table, Cascader, Select, Row, Col, Divider, Space, Tabs, Button } from 'antd'
+import { Input, Table, Cascader, Select, Row, Col, Divider, Space, Tabs, Button, Spin, Alert } from 'antd'
 import { SearchOutlined, StarFilled } from '@ant-design/icons';
 import { Bar, Pie, measureTextWidth } from '@ant-design/plots';
 
@@ -119,13 +119,87 @@ const CityOptions = [
     }
 ];
 
+//Properties : {data, xField, yField, seriesField, xAxisLabel, yAxisLabel}
+function BarPlot(props) {
+    return < Bar {...{
+        data: props.data,
+        xField: props.xField,
+        yField: props.yField,
+        seriesField: props.seriesField,
+        isPercent: true,
+        isStack: true,
+        autoFit: true,
+        width: 1200,
+        xAxis: {
+            title: {
+                text: props.xAxisLabel,
+            },
+        },
+        yAxis: {
+            title: {
+                text: props.yAxisLabel,
+            },
+        },
+        label: {
+            position: 'middle',
+            content: (item) => {
+                return item.count.toFixed(2);
+            },
+            style: {
+                fill: '#fff',
+            }
+        }
+    }
+    }
+    />
+}
+
+function DonutPlot(props) {
+    var config = {
+        appendPadding: 10,
+        data: props.data,
+        angleField: props.angleField,
+        colorField: props.colorField,
+        radius: 1,
+        innerRadius: 0.6,
+        label: {
+            type: 'inner',
+            offset: '-50%',
+            style: {
+                textAlign: 'center',
+                fontSize: 14,
+            },
+        },
+        interactions: [
+            {
+                type: 'element-selected',
+            },
+            {
+                type: 'element-active',
+            },
+        ],
+        statistic: {
+            title: false,
+            content: {
+                style: {
+                    whiteSpace: 'pre-wrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                },
+                content: props.title,
+            },
+        },
+    };
+
+    return <Pie {...config} />;
+};
 
 class ScientistPage extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            regionQuery: '',
-            stateNameQuery: '',
+            regionQuery: 'state',
+            stateNameQuery: 'MA',
             cityNameQuery: '',
             zipNameQuery: '',
             starDistribution: [],
@@ -164,24 +238,24 @@ class ScientistPage extends React.Component {
     }
 
     enterLoading = index => {
-      this.setState(({ loadings }) => {
-        const newLoadings = [...loadings];
-        newLoadings[index] = true;
-
-        return {
-          loadings: newLoadings,
-        };
-      });
-      setTimeout(() => {
         this.setState(({ loadings }) => {
-          const newLoadings = [...loadings];
-          newLoadings[index] = false;
+            const newLoadings = [...loadings];
+            newLoadings[index] = true;
 
-          return {
-            loadings: newLoadings,
-          };
+            return {
+                loadings: newLoadings,
+            };
         });
-      }, 30000);
+        setTimeout(() => {
+            this.setState(({ loadings }) => {
+                const newLoadings = [...loadings];
+                newLoadings[index] = false;
+
+                return {
+                    loadings: newLoadings,
+                };
+            });
+        }, 30000);
     };
 
     handleRegionQueryChange(value) {
@@ -239,11 +313,11 @@ class ScientistPage extends React.Component {
         for (let i = 0; i < this.state.starDistribution.length; i++) {
             let element = this.state.starDistribution[i];
             var sum = element[countKey[1]] + element[countKey[2]] + element[countKey[3]] + element[countKey[4]] + element[countKey[5]];
-            result.push({ "title": element[title], "stars": "*", "count": element[countKey[1]], "sum": sum });
-            result.push({ "title": element[title], "stars": "**", "count": element[countKey[2]], "sum": sum });
-            result.push({ "title": element[title], "stars": "***", "count": element[countKey[3]], "sum": sum });
-            result.push({ "title": element[title], "stars": "****", "count": element[countKey[4]], "sum": sum });
-            result.push({ "title": element[title], "stars": "*****", "count": element[countKey[5]], "sum": sum });
+            result.push({ "title": element[title], "stars": "$", "count": element[countKey[1]], "sum": sum });
+            result.push({ "title": element[title], "stars": "$$", "count": element[countKey[2]], "sum": sum });
+            result.push({ "title": element[title], "stars": "$$$", "count": element[countKey[3]], "sum": sum });
+            result.push({ "title": element[title], "stars": "$$$$", "count": element[countKey[4]], "sum": sum });
+            result.push({ "title": element[title], "stars": "$$$$$", "count": element[countKey[5]], "sum": sum });
         }
 
         result = result.sort(function (a, b) {
@@ -257,9 +331,9 @@ class ScientistPage extends React.Component {
     }
 
     UpdateStarDistribution() {
-        this.state.starDistribution = [];
         var NameQuery = '';
         var title = '';
+        console.log("this.state.regionQuery is :" + this.state.regionQuery);
         if (this.state.regionQuery === 'state') {
             NameQuery = this.state.stateNameQuery;
             title = 'city';
@@ -269,21 +343,27 @@ class ScientistPage extends React.Component {
         } else if (this.state.regionQuery === 'zip') {
             NameQuery = this.state.zipNameQuery;
         }
+        console.log("NameQuery is :" + NameQuery);
         if (this.state.regionQuery === 'state' || this.state.regionQuery === 'city') {
             getStarDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
                 this.setState({ starDistribution: res.results }, () => {
                     this.getStarBarPlot(title, 'star');
-                }
-                )
+                })
             });
         } else if (this.state.regionQuery === 'zip') {
             console.log("regionQuery is " + this.state.regionQuery);
             console.log("zipNameQuery is " + this.state.zipNameQuery);
-            this.state.starDonutPlot = [];
+            let tempData = []
             getStarDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
-                this.setState({ starDonutPlot: res.results });
+                let tempData = [];
+                tempData.push({ "stars": "2-2.5 Stars", "count": res.results[0]['count'] + res.results[1]['count'] });
+                tempData.push({ "stars": "3-3.5 Stars", "count": res.results[2]['count'] + res.results[3]['count'] });
+                tempData.push({ "stars": "4-4.5 Stars", "count": res.results[4]['count'] + res.results[5]['count'] });
+                tempData.push({ "stars": "5 Stars", "count": res.results[6]['count'] });
+                this.setState({ starDonutPlot: tempData });
                 console.log("starDonutPlot is :" + this.state.starDonutPlot);
             });
+
         }
     }
 
@@ -412,8 +492,10 @@ class ScientistPage extends React.Component {
         })
     }
 
+
+
     componentDidMount() {
-        this.UpdateStarDistribution();
+        //this.UpdateStarDistribution();
     }
 
 
@@ -535,37 +617,13 @@ class ScientistPage extends React.Component {
                         </Row>
                         <Row>
                             {this.state.starBarPlot == 0 ? null :
-                                < Bar {...{
-                                    data: this.state.starBarPlot,
-                                    xField: 'count',
-                                    yField: 'title',
-                                    seriesField: 'stars',
-                                    isPercent: true,
-                                    isStack: true,
-                                    autoFit: true,
-                                    width: 1200,
-                                    // padding: [30, 100, 80, 80],
-                                    xAxis: {
-                                        title: {
-                                            text: 'Percentage',
-                                        },
-                                    },
-                                    yAxis: {
-                                        title: {
-                                            text: 'City',
-                                        },
-                                    },
-                                    label: {
-                                        position: 'middle',
-                                        content: (item) => {
-                                            return item.count.toFixed(2);
-                                        },
-                                        style: {
-                                            fill: '#fff',
-                                        }
-                                    }
-                                }
-                                }
+                                <BarPlot
+                                    data={this.state.starBarPlot}
+                                    xField="count"
+                                    yField="title"
+                                    seriesField="stars"
+                                    xAxisLabel="Percentage of Businesses"
+                                    yAxisLabel="City"
                                 />
                             }
                         </Row>
@@ -580,37 +638,13 @@ class ScientistPage extends React.Component {
                         </Row>
 
                         {this.state.starBarPlot.length == 0 ? null :
-                            < Bar {...{
-                                data: this.state.starBarPlot,
-                                xField: 'count',
-                                yField: 'title',
-                                seriesField: 'stars',
-                                isPercent: true,
-                                isStack: true,
-                                autoFit: true,
-                                width: 1200,
-                                // padding: [30, 100, 80, 80],
-                                xAxis: {
-                                    title: {
-                                        text: 'Percentage',
-                                    },
-                                },
-                                yAxis: {
-                                    title: {
-                                        text: 'Postal Code',
-                                    },
-                                },
-                                label: {
-                                    position: 'middle',
-                                    content: (item) => {
-                                        return item.count.toFixed(2);
-                                    },
-                                    style: {
-                                        fill: '#fff',
-                                    }
-                                }
-                            }
-                            }
+                            <BarPlot
+                                data={this.state.starBarPlot}
+                                xField="count"
+                                yField="title"
+                                seriesField="stars"
+                                xAxisLabel="Percentage of Businesses"
+                                yAxisLabel="Postal Code"
                             />
                         }
                     </TabPane>
@@ -624,7 +658,14 @@ class ScientistPage extends React.Component {
                         </Row>
 
                         <Row justify='center'>
-                            {this.state.starDonutPlot == 0 ? null : this.PiePlot()}
+                            {this.state.starDonutPlot == 0 ? null :
+                                <DonutPlot
+                                    data={this.state.starDonutPlot}
+                                    angleField="count"
+                                    colorField="stars"
+                                    title="Business Rating"
+                                />
+                            }
                         </Row>
                     </TabPane>
                 </Tabs>
@@ -664,37 +705,13 @@ class ScientistPage extends React.Component {
                         </Row>
                         <Row>
                             {this.state.starBarPlot == 0 ? null :
-                                < Bar {...{
-                                    data: this.state.starBarPlot,
-                                    xField: 'count',
-                                    yField: 'title',
-                                    seriesField: 'stars',
-                                    isPercent: true,
-                                    isStack: true,
-                                    autoFit: true,
-                                    width: 1200,
-                                    // padding: [30, 100, 80, 80],
-                                    xAxis: {
-                                        title: {
-                                            text: 'Percentage',
-                                        },
-                                    },
-                                    yAxis: {
-                                        title: {
-                                            text: 'City',
-                                        },
-                                    },
-                                    label: {
-                                        position: 'middle',
-                                        content: (item) => {
-                                            return item.count.toFixed(2);
-                                        },
-                                        style: {
-                                            fill: '#fff',
-                                        }
-                                    }
-                                }
-                                }
+                                <BarPlot
+                                    data={this.state.starBarPlot}
+                                    xField="count"
+                                    yField="title"
+                                    seriesField="stars"
+                                    xAxisLabel="Percentage of Businesses"
+                                    yAxisLabel="City"
                                 />
                             }
                         </Row>
@@ -709,37 +726,13 @@ class ScientistPage extends React.Component {
                         </Row>
 
                         {this.state.starBarPlot.length == 0 ? null :
-                            < Bar {...{
-                                data: this.state.starBarPlot,
-                                xField: 'count',
-                                yField: 'title',
-                                seriesField: 'stars',
-                                isPercent: true,
-                                isStack: true,
-                                autoFit: true,
-                                width: 1200,
-                                // padding: [30, 100, 80, 80],
-                                xAxis: {
-                                    title: {
-                                        text: 'Percentage',
-                                    },
-                                },
-                                yAxis: {
-                                    title: {
-                                        text: 'Postal Code',
-                                    },
-                                },
-                                label: {
-                                    position: 'middle',
-                                    content: (item) => {
-                                        return item.count.toFixed(2);
-                                    },
-                                    style: {
-                                        fill: '#fff',
-                                    }
-                                }
-                            }
-                            }
+                            <BarPlot
+                                data={this.state.starBarPlot}
+                                xField="count"
+                                yField="title"
+                                seriesField="stars"
+                                xAxisLabel="Percentage of Businesses"
+                                yAxisLabel="Postal Code"
                             />
                         }
                     </TabPane>
@@ -753,7 +746,14 @@ class ScientistPage extends React.Component {
                         </Row>
 
                         <Row justify='center'>
-                            {this.state.starDonutPlot == 0 ? null : this.pricePiePlot()}
+                            {this.state.starDonutPlot == 0 ? null :
+                                <DonutPlot
+                                    data={this.state.starDonutPlot}
+                                    angleField="percent"
+                                    colorField="stars"
+                                    title="Business Price"
+                                />
+                            }
                         </Row>
                     </TabPane>
                 </Tabs>
@@ -851,7 +851,7 @@ class ScientistPage extends React.Component {
                     <Option value="WA">Washington</Option>
                 </Select>
                 &nbsp;
-                <Button onClick={()=>{this.enterLoading(0);this.updateHealthData();}} loading={loadings[0]}>Search</Button>
+                <Button onClick={() => { this.enterLoading(0); this.updateHealthData(); }} loading={loadings[0]}>Search</Button>
                 <br />
                 {this.state.healthData.length == 0 ? null :
                     <Tabs style={{ marginLeft: 20, marginRight: 20 }}>
