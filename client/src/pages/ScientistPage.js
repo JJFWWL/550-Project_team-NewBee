@@ -1,26 +1,89 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Input, Table, Cascader, Select, Row, Col, Divider, Space, Tabs, Button, Spin, Alert } from 'antd'
+import { Input, Table, Cascader, Select, Row, Col, Divider, Space, Tabs, Button, Spin, Alert, Result } from 'antd'
 import { SearchOutlined, StarFilled } from '@ant-design/icons';
 import { Bar, Pie, measureTextWidth } from '@ant-design/plots';
-
-import { AreaMap } from '@ant-design/maps';
+import { Chart } from "react-google-charts";
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
 import {
     getStarDistribution,
     getPriceDistribution,
-    getAverageRating,
+    getAverageData,
     getHealthData
 } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
 import FormItem from 'antd/lib/form/FormItem';
+import continuousColorLegend from 'react-vis/dist/legends/continuous-color-legend';
 const wideFormat = format('.3r');
 
 const { Column, ColumnGroup } = Table;
 const { TabPane } = Tabs;
 const { Option } = Select;
+
+const stateMap = {
+    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado",
+    "CT": "Connecticut", "DE": "Delaware", "DC": "District Of Columbia", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii",
+    "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine",
+    "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri",
+    "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico",
+    "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma", "OR": "Oregon",
+    "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota", "TN": "Tennessee",
+    "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia",
+    "WI": "Wisconsin", "WY": "Wyoming"
+};
+
+const USMapData = [
+    ['State', 'Popularity', 'Rating'],
+    ['Alabama', 200, 5],
+    ['Washington', 300, 4],
+    ['California', 400, 3],
+    ['Colorado', 500, 5],
+    ['Utah', 600, 4],
+    ['Texas', 700, 5]
+];
+
+const options = {
+    region: "US", //United States
+    resolution: "provinces",
+    displayMode: 'auto',
+    magnifyingGlass: {
+        enable: true,
+        zoomFactor: 20.0
+    }
+
+};
+
+
+function USMap(props) {
+    return (
+        <Chart
+            chartEvents={[
+                {
+                    eventName: "select",
+                    callback: ({ chartWrapper }) => {
+                        const chart = chartWrapper.getChart();
+                        const selection = chart.getSelection();
+                        if (selection.length === 0) return;
+                        const region = USMapData[selection[0].row + 1];
+                        console.log("Selected : " + region);
+                    },
+                },
+            ]}
+            chartType="GeoChart"
+            width="500px"
+            height="400px"
+
+            data={USMapData}
+            options={options}
+
+        />
+    );
+
+}
+
+
 
 const CityOptions = [
     //OH, OR, TX, WA
@@ -130,27 +193,14 @@ function BarPlot(props) {
         isStack: true,
         autoFit: true,
         width: 1200,
-        xAxis: {
-            title: {
-                text: props.xAxisLabel,
-            },
-        },
-        yAxis: {
-            title: {
-                text: props.yAxisLabel,
-            },
-        },
+        xAxis: { title: { text: props.xAxisLabel } },
+        yAxis: { title: { text: props.yAxisLabel } },
         label: {
             position: 'middle',
-            content: (item) => {
-                return item.count.toFixed(2);
-            },
-            style: {
-                fill: '#fff',
-            }
+            content: (item) => { return item.count.toFixed(2); },
+            style: { fill: '#fff' }
         }
-    }
-    }
+    }}
     />
 }
 
@@ -162,22 +212,9 @@ function DonutPlot(props) {
         colorField: props.colorField,
         radius: 1,
         innerRadius: 0.6,
-        label: {
-            type: 'inner',
-            offset: '-50%',
-            style: {
-                textAlign: 'center',
-                fontSize: 14,
-            },
-        },
-        interactions: [
-            {
-                type: 'element-selected',
-            },
-            {
-                type: 'element-active',
-            },
-        ],
+        meta: { percent: { formatter: (v) => v + '%' } },
+        label: { type: 'inner', offset: '-50%', style: { textAlign: 'center', fontSize: 14 } },
+        interactions: [{ type: 'element-selected' }, { type: 'element-active' }],
         statistic: {
             title: false,
             content: {
@@ -199,7 +236,7 @@ class ScientistPage extends React.Component {
         super(props)
         this.state = {
             regionQuery: 'state',
-            stateNameQuery: 'MA',
+            stateNameQuery: '',
             cityNameQuery: '',
             zipNameQuery: '',
             starDistribution: [],
@@ -207,13 +244,13 @@ class ScientistPage extends React.Component {
             averageRating: [],
 
             starBarPlot: [],
+            priceBarPlot: [],
             starDonutPlot: [],
+            priceDonutPlot: [],
 
-            data: {
-                mapType: '',
-                features: [],
-            },
-
+            stateMapData: [],
+            cityMapData: [],
+            zipMapData: [],
 
             healthStateQuery: '',
             healthData: [],
@@ -233,7 +270,7 @@ class ScientistPage extends React.Component {
 
         this.UpdateStarDistribution = this.UpdateStarDistribution.bind(this)
         this.UpdatePrice = this.UpdatePrice.bind(this)
-
+        this.UpdateMapData = this.UpdateMapData.bind(this)
         this.updateHealthData = this.updateHealthData.bind(this)
     }
 
@@ -250,7 +287,6 @@ class ScientistPage extends React.Component {
             this.setState(({ loadings }) => {
                 const newLoadings = [...loadings];
                 newLoadings[index] = false;
-
                 return {
                     loadings: newLoadings,
                 };
@@ -272,6 +308,7 @@ class ScientistPage extends React.Component {
 
     handleCityNameQueryChange(value) {
         this.setState({
+            stateNameQuery: value[0],
             cityNameQuery: value[1]
         })
     }
@@ -308,25 +345,33 @@ class ScientistPage extends React.Component {
         console.log("title is " + title);
         let starCount = ["", "1star_count", "2star_count", "3star_count", "4star_count", "5star_count"];
         let priceCount = ["", "1price_count", "2price_count", "3price_count", "4price_count", "5price_count"];
-        let countKey = type === 'star' ? starCount : priceCount;
+        let countKey = type === 'stars' ? starCount : priceCount;
+        let dataset = type === 'stars' ? this.state.starDistribution : this.state.priceDistribution;
+        if (dataset.length === 0) return;
 
-        for (let i = 0; i < this.state.starDistribution.length; i++) {
-            let element = this.state.starDistribution[i];
+        for (let i = 0; i < dataset.length; i++) {
+            let element = dataset[i];
             var sum = element[countKey[1]] + element[countKey[2]] + element[countKey[3]] + element[countKey[4]] + element[countKey[5]];
-            result.push({ "title": element[title], "stars": "$", "count": element[countKey[1]], "sum": sum });
-            result.push({ "title": element[title], "stars": "$$", "count": element[countKey[2]], "sum": sum });
-            result.push({ "title": element[title], "stars": "$$$", "count": element[countKey[3]], "sum": sum });
-            result.push({ "title": element[title], "stars": "$$$$", "count": element[countKey[4]], "sum": sum });
-            result.push({ "title": element[title], "stars": "$$$$$", "count": element[countKey[5]], "sum": sum });
+            result.push({ "title": element[title], [type]: "$", "count": element[countKey[1]], "sum": sum });
+            result.push({ "title": element[title], [type]: "$$", "count": element[countKey[2]], "sum": sum });
+            result.push({ "title": element[title], [type]: "$$$", "count": element[countKey[3]], "sum": sum });
+            result.push({ "title": element[title], [type]: "$$$$", "count": element[countKey[4]], "sum": sum });
+            result.push({ "title": element[title], [type]: "$$$$$", "count": element[countKey[5]], "sum": sum });
         }
 
         result = result.sort(function (a, b) {
             return b.sum - a.sum;
         });
-        console.log("starResult is :" + result);
-        this.setState({
-            starBarPlot: result.slice(0, 50)
-        })
+
+        if (type === 'stars') {
+            this.setState({
+                starBarPlot: result.slice(0, 50)
+            })
+        } else {
+            this.setState({
+                priceBarPlot: result.slice(0, 50)
+            })
+        }
 
     }
 
@@ -344,10 +389,11 @@ class ScientistPage extends React.Component {
             NameQuery = this.state.zipNameQuery;
         }
         console.log("NameQuery is :" + NameQuery);
+
         if (this.state.regionQuery === 'state' || this.state.regionQuery === 'city') {
             getStarDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
                 this.setState({ starDistribution: res.results }, () => {
-                    this.getStarBarPlot(title, 'star');
+                    this.getStarBarPlot(title, 'stars');
                 })
             });
         } else if (this.state.regionQuery === 'zip') {
@@ -356,14 +402,14 @@ class ScientistPage extends React.Component {
             let tempData = []
             getStarDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
                 let tempData = [];
-                tempData.push({ "stars": "2-2.5 Stars", "count": res.results[0]['count'] + res.results[1]['count'] });
-                tempData.push({ "stars": "3-3.5 Stars", "count": res.results[2]['count'] + res.results[3]['count'] });
-                tempData.push({ "stars": "4-4.5 Stars", "count": res.results[4]['count'] + res.results[5]['count'] });
-                tempData.push({ "stars": "5 Stars", "count": res.results[6]['count'] });
+                if (res.results.length > 0) {
+                    tempData.push({ "stars": "2-2.5 Stars", "count": res.results[0]['count'] + res.results[1]['count'] });
+                    tempData.push({ "stars": "3-3.5 Stars", "count": res.results[2]['count'] + res.results[3]['count'] });
+                    tempData.push({ "stars": "4-4.5 Stars", "count": res.results[4]['count'] + res.results[5]['count'] });
+                    tempData.push({ "stars": "5 Stars", "count": res.results[6]['count'] });
+                }
                 this.setState({ starDonutPlot: tempData });
-                console.log("starDonutPlot is :" + this.state.starDonutPlot);
             });
-
         }
     }
 
@@ -379,9 +425,11 @@ class ScientistPage extends React.Component {
         } else if (this.state.regionQuery === 'zip') {
             NameQuery = this.state.zipNameQuery;
         }
+
         if (this.state.regionQuery === 'state' || this.state.regionQuery === 'city') {
             getPriceDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
-                this.setState({ starDistribution: res.results }, () => {
+                this.setState({ priceDistribution: res.results }, () => {
+                    console.log("title is :" + title);
                     this.getStarBarPlot(title, 'price');
                 }
                 )
@@ -389,28 +437,32 @@ class ScientistPage extends React.Component {
         } else if (this.state.regionQuery === 'zip') {
             console.log("regionQuery is " + this.state.regionQuery);
             console.log("zipNameQuery is " + this.state.zipNameQuery);
-            this.state.starDonutPlot = [];
             getPriceDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
                 let result = [];
-                for (let i = 0; i < res.results.length; i++) {
-                    let element = res.results[i];
-                    if (i === 0) { result.push({ 'price': '$', 'percent': element.percent }); }
-                    else if (i === 1) { result.push({ 'price': '$$', 'percent': element.percent }); }
-                    else if (i === 2) { result.push({ 'price': '$$$', 'percent': element.percent }); }
-                    else if (i === 3) { result.push({ 'price': '$$$$', 'percent': element.percent }); }
-                    else if (i === 4) { result.push({ 'price': '$$$$$', 'percent': element.percent }); }
+                if (res.results.length > 0) {
+                    result.push({ 'price': '$', 'percent': Math.round(res.results[0]['percent'] * 100) });
+                    result.push({ 'price': '$$', 'percent': Math.round(res.results[1]['percent'] * 100) });
+                    result.push({ 'price': '$$$', 'percent': Math.round(res.results[2]['percent'] * 100) });
+                    result.push({ 'price': '$$$$', 'percent': Math.round(res.results[3]['percent'] * 100) });
                 }
-                this.setState({ starDonutPlot: result });
-                console.log("starDonutPlot is :" + this.state.starDonutPlot);
+                this.setState({ priceDonutPlot: result });
             });
         }
     }
 
+    UpdateMapData() {
+
+    }
 
     handleTabChange(key) {
         this.setState({
+            stateNameQuery: '',
+            cityNameQuery: '',
+            zipNameQuery: '',
             starDistribution: [],
+            priceDistribution: [],
             starBarPlot: [],
+            priceBarPlot: [],
         });
 
         if (key === 'state') {
@@ -492,99 +544,9 @@ class ScientistPage extends React.Component {
         })
     }
 
-
-
     componentDidMount() {
         //this.UpdateStarDistribution();
     }
-
-
-    PiePlot = () => {
-        var config = {
-            appendPadding: 10,
-            data: this.state.starDonutPlot,
-            angleField: 'count',
-            colorField: 'stars',
-            radius: 1,
-            innerRadius: 0.6,
-            label: {
-                type: 'inner',
-                offset: '-50%',
-                style: {
-                    textAlign: 'center',
-                    fontSize: 14,
-                },
-            },
-            interactions: [
-                {
-                    type: 'element-selected',
-                },
-                {
-                    type: 'element-active',
-                },
-            ],
-            statistic: {
-                title: false,
-                content: {
-                    style: {
-                        whiteSpace: 'pre-wrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                    },
-                    content: 'Business Rating',
-                },
-            },
-        };
-
-        return <Pie {...config} />;
-    };
-
-    pricePiePlot = () => {
-        var config = {
-            appendPadding: 10,
-            data: this.state.starDonutPlot,
-            angleField: 'percent',
-            colorField: 'stars',
-            radius: 1,
-            innerRadius: 0.6,
-            // meta: {
-            //     percent: {
-            //         formatter: (v) => `${v * 100} %`,
-            //     },
-            // },
-            label: {
-                type: 'inner',
-                offset: '-50%',
-                // content: (d) => `${d.RestaurantsPriceRange2}`,
-                style: {
-                    textAlign: 'center',
-                    fontSize: 14,
-                },
-            },
-            interactions: [
-                {
-                    type: 'element-selected',
-                },
-                {
-                    type: 'element-active',
-                },
-            ],
-            statistic: {
-                title: false,
-                content: {
-                    style: {
-                        whiteSpace: 'pre-wrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                    },
-                    content: 'Price',
-                },
-            },
-        };
-
-        return <Pie {...config} />;
-    };
-
 
     ratingTab = () => (
         <div>
@@ -597,10 +559,7 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Select
-                                    defaultValue={"MA"}
-                                    onChange={this.handleStateNameQueryChange}
-                                >
+                                <Select style={{ width: 150 }} onChange={this.handleStateNameQueryChange}>
                                     <Option value="MA">Massachusetts</Option>
                                     <Option value="OH">Ohio</Option>
                                     <Option value="OR">Oregon</Option>
@@ -632,9 +591,13 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Cascader options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+                                <Cascader size="" options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+                                &nbsp;
                                 <Button type="primary" size="medium" onClick={this.UpdateStarDistribution}>Search</Button>
                             </Space>
+                        </Row>
+                        <Row justify='center'>
+                            {<h3>City: {this.state.cityNameQuery + ' | ' + this.state.stateNameQuery}</h3>}
                         </Row>
 
                         {this.state.starBarPlot.length == 0 ? null :
@@ -656,9 +619,12 @@ class ScientistPage extends React.Component {
                                 <Button type="primary" size="medium" onClick={this.UpdateStarDistribution}>Search</Button>
                             </Space>
                         </Row>
+                        <Row justify='center'>
+                            {<h3>Zip: {this.state.zipNameQuery}</h3>}
+                        </Row>
 
                         <Row justify='center'>
-                            {this.state.starDonutPlot == 0 ? null :
+                            {this.state.starDonutPlot == 0 ? <Result title="Input a valid postal code." /> :
                                 <DonutPlot
                                     data={this.state.starDonutPlot}
                                     angleField="count"
@@ -677,7 +643,7 @@ class ScientistPage extends React.Component {
     priceTab = () => (
         <div>
             <Row justify='center'>
-                <h4>Business Price Scope: </h4>
+                <h4>Business Price Rating: </h4>
             </Row>
             <Row justify='center' >
                 <Tabs defaultActiveKey="state" centered type="card" size='large' onChange={this.handleTabChange}>
@@ -685,10 +651,7 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Select
-                                    defaultValue={"MA"}
-                                    onChange={this.handleStateNameQueryChange}
-                                >
+                                <Select style={{ width: 150 }} onChange={this.handleStateNameQueryChange}>
                                     <Option value="MA">Massachusetts</Option>
                                     <Option value="OH">Ohio</Option>
                                     <Option value="OR">Oregon</Option>
@@ -704,12 +667,12 @@ class ScientistPage extends React.Component {
                             <h3>State: {this.state.stateNameQuery}</h3>
                         </Row>
                         <Row>
-                            {this.state.starBarPlot == 0 ? null :
+                            {this.state.priceBarPlot == 0 ? null :
                                 <BarPlot
-                                    data={this.state.starBarPlot}
+                                    data={this.state.priceBarPlot}
                                     xField="count"
                                     yField="title"
-                                    seriesField="stars"
+                                    seriesField="price"
                                     xAxisLabel="Percentage of Businesses"
                                     yAxisLabel="City"
                                 />
@@ -720,17 +683,21 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Cascader options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+                                <Cascader size="medium" options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+
                                 <Button type="primary" size="medium" onClick={this.UpdatePrice}>Search</Button>
                             </Space>
                         </Row>
+                        <Row justify='center'>
+                            {<h3>City: {this.state.cityNameQuery + ' | ' + this.state.stateNameQuery}</h3>}
+                        </Row>
 
-                        {this.state.starBarPlot.length == 0 ? null :
+                        {this.state.priceBarPlot.length == 0 ? null :
                             <BarPlot
-                                data={this.state.starBarPlot}
+                                data={this.state.priceBarPlot}
                                 xField="count"
                                 yField="title"
-                                seriesField="stars"
+                                seriesField="price"
                                 xAxisLabel="Percentage of Businesses"
                                 yAxisLabel="Postal Code"
                             />
@@ -744,14 +711,17 @@ class ScientistPage extends React.Component {
                                 <Button type="primary" size="medium" onClick={this.UpdatePrice}>Search</Button>
                             </Space>
                         </Row>
+                        <Row justify='center'>
+                            {<h3>Zip: {this.state.zipNameQuery}</h3>}
+                        </Row>
 
                         <Row justify='center'>
-                            {this.state.starDonutPlot == 0 ? null :
+                            {this.state.priceDonutPlot == 0 ? <Result title="Input a valid postal code." /> :
                                 <DonutPlot
-                                    data={this.state.starDonutPlot}
+                                    data={this.state.priceDonutPlot}
                                     angleField="percent"
-                                    colorField="stars"
-                                    title="Business Price"
+                                    colorField="price"
+                                    title="Business Rating"
                                 />
                             }
                         </Row>
@@ -759,81 +729,36 @@ class ScientistPage extends React.Component {
                 </Tabs>
             </Row>
             <Divider />
-
         </div>
     );
 
-    DemoAreaMap = () => {
-        this.setState({ mapType: 'FeatureCollection', features: [] });
-        //UPDATE MAP DATA
-        //TO-DO
-        const asyncFetch = () => {
-            fetch('https://gw.alipayobjects.com/os/basement_prod/d36ad90e-3902-4742-b8a2-d93f7e5dafa2.json')
-                .then((response) => response.json())
-                .then((json) => {
-                    this.setState({ mapType: json.type, features: json.features });
-                })
-                .catch((error) => {
-                    console.log('fetch data failed', error);
-                });
-        };
-        const color = [
-            'rgb(255,255,217)',
-            'rgb(237,248,177)',
-            'rgb(199,233,180)',
-            'rgb(127,205,187)',
-            'rgb(65,182,196)',
-            'rgb(29,145,192)',
-            'rgb(34,94,168)',
-            'rgb(12,44,132)',
-        ];
-        const config = {
-            map: {
-                type: 'mapbox',
-                style: 'blank',
-                center: [120.19382669582967, 30.258134],
-                zoom: 3,
-                pitch: 0,
-            },
-            source: {
-                data: this.state.data,
-                parser: {
-                    type: 'geojson',
-                },
-            },
-            autoFit: true,
-            color: {
-                field: 'density',
-                value: color,
-                scale: {
-                    type: 'quantile',
-                },
-            },
-            style: {
-                opacity: 1,
-                stroke: 'rgb(93,112,146)',
-                lineType: 'dash',
-                lineDash: [2, 2],
-                lineWidth: 0.6,
-                lineOpacity: 1,
-            },
-            state: {
-                active: true,
-                select: true,
-            },
-            tooltip: {
-                items: ['name', 'density'],
-            },
-            zoom: {
-                position: 'bottomright',
-            },
-            legend: {
-                position: 'bottomleft',
-            },
-        };
-
-        return <AreaMap {...config} />;
-    };
+    overviewTab = () => (
+        <div>
+            <Row justify='center'>
+                <h4>Business Overview: </h4>
+            </Row>
+            <Row justify='center' >
+                <Tabs defaultActiveKey="state" centered type="card" size='large' onChange={this.handleTabChange}>
+                    <TabPane tab="State" key="state" >
+                        <Row justify='center'>
+                            <USMap />
+                        </Row>
+                    </TabPane>
+                    <TabPane tab="City" key="city" >
+                        <Row justify='center'>
+                            <h3>City level map</h3>
+                        </Row>
+                    </TabPane>
+                    <TabPane tab="Postal Code" key="postal_code">
+                        <Row justify='center'>
+                            <h3>Postal Code level map</h3>
+                        </Row>
+                    </TabPane>
+                </Tabs>
+            </Row>
+            <Divider />
+        </div>
+    )
 
 
     healthTab() {
@@ -912,15 +837,15 @@ class ScientistPage extends React.Component {
         return (
             <div>
                 <MenuBar />
-                <Tabs defaultActiveKey="1" centered type="card" size='large' >
+                <Tabs defaultActiveKey="1" centered type="card" size='large' onChange={this.handleTabChange} >
                     <TabPane tab="Rating" key="1">
                         {this.ratingTab()}
                     </TabPane>
                     <TabPane tab="Price" key="2">
                         {this.priceTab()}
                     </TabPane>
-                    <TabPane tab="Map" key="3" id='mapPage'>
-
+                    <TabPane tab="Overview" key="3">
+                        {this.overviewTab()}
                     </TabPane>
                     <TabPane tab="Health" key="4">
                         {this.healthTab()}

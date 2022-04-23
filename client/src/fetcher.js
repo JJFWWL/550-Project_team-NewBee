@@ -58,18 +58,8 @@ const getPriceDistribution = async (region, name, page, pagesize) => {
     return res.json()
 }
 
-
-
-const getAverageRating = async (region, name, page, pagesize) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/avg_rating/${region}?name=${name}&page=${page}&pagesize=${pagesize}`, {
-        method: 'GET',
-    })
-    return res.json()
-}
-
-
-const getAveragePrice = async (region, name, page, pagesize) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/avg_price/${region}?name=${name}&page=${page}&pagesize=${pagesize}`, {
+const getAverageData = async (region, name, page, pagesize) => {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/avg_sci/?${region}&page=${page}&pagesize=${pagesize}`, {
         method: 'GET',
     })
     return res.json()
@@ -99,8 +89,7 @@ export {
     getUserByBusinessID,
     getStarDistribution,
     getPriceDistribution,
-    getAverageRating,
-    getAveragePrice,
+    getAverageData,
     getBusinessPercentage,
     getHealthData
 }
