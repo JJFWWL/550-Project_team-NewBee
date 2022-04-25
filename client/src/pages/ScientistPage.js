@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Input, Table, Cascader, Select, Row, Col, Divider, Space, Tabs, Button, Spin, Alert, Result } from 'antd'
+import { Input, Table, Radio, Cascader, Select, Row, Col, Divider, Space, Tabs, Button, Spin, Alert, Result } from 'antd'
 import { SearchOutlined, StarFilled } from '@ant-design/icons';
 import { Bar, Pie, measureTextWidth } from '@ant-design/plots';
 import { Chart } from "react-google-charts";
@@ -34,17 +34,40 @@ const stateMap = {
     "WI": "Wisconsin", "WY": "Wyoming"
 };
 
+//Massachusetts,25783,1.8558,
+//Oregon,18991,1.7356,
+//Texas,17496,1.7513,
+//Florida,16662,1.73,
+//Georgia,13636,1.8028,
+//?,12416,1.8869,
+//Ohio,8842,1.6977,
+//Colorado,2471,1.8617,
+//Washington,2403,1.7216
+
 const USMapData = [
-    ['State', 'Popularity', 'Rating'],
-    ['Alabama', 200, 5],
+    ['State', 'NumberOfBusiness', 'AvragePrice'],
+    ['Alabama', 200, 3],
     ['Washington', 300, 4],
-    ['California', 400, 3],
-    ['Colorado', 500, 5],
+    ['California', 400, 5],
+    ['Colorado', 500, 4],
     ['Utah', 600, 4],
-    ['Texas', 700, 5]
+    ['Texas', 700, 4],
 ];
 
-const options = {
+const sampleCityData = [
+    ['City', 'NumberOfBusiness', 'AvragePrice'],
+    ['Boston', 200, 3],
+    ['New York', 300, 4],
+    ['San Francisco', 400, 5],
+    ['Los Angeles', 500, 4],
+    ['Chicago', 600, 4],
+    ['Houston', 700, 4],
+    ['Philadelphia', 800, 4],
+    ['Washington', 900, 4],
+    ['Miami', 1000, 4],
+]
+
+const stateMapOptions = {
     region: "US", //United States
     resolution: "provinces",
     displayMode: 'auto',
@@ -54,6 +77,14 @@ const options = {
     }
 
 };
+const CityMapOptions = {
+    region: "US", //United States
+    displayMode: 'markers',
+    magnifyingGlass: {
+        enable: true,
+        zoomFactor: 20.0
+    }
+}
 
 
 function USMap(props) {
@@ -66,7 +97,7 @@ function USMap(props) {
                         const chart = chartWrapper.getChart();
                         const selection = chart.getSelection();
                         if (selection.length === 0) return;
-                        const region = USMapData[selection[0].row + 1];
+                        const region = props.data[selection[0].row + 1];
                         console.log("Selected : " + region);
                     },
                 },
@@ -75,9 +106,8 @@ function USMap(props) {
             width="500px"
             height="400px"
 
-            data={USMapData}
-            options={options}
-
+            data={props.data}
+            options={props.options}
         />
     );
 
@@ -249,6 +279,9 @@ class ScientistPage extends React.Component {
             priceDonutPlot: [],
 
             stateMapData: [],
+            statePriceData: [],
+            stateRatingData: [],
+            displayAvgPrice: true,
             cityMapData: [],
             zipMapData: [],
 
@@ -450,7 +483,12 @@ class ScientistPage extends React.Component {
         }
     }
 
-    UpdateMapData() {
+    UpdateMapData(key) {
+        if (key === 'price') {
+            this.setState({ displayAvgPrice: true });
+        } else {
+            this.setState({ displayAvgPrice: false });
+        }
 
     }
 
@@ -479,6 +517,8 @@ class ScientistPage extends React.Component {
             })
         }
     }
+
+
 
     updateHealthData() {
         getHealthData(this.state.healthStateQuery, null, null).then(res => {
@@ -546,7 +586,30 @@ class ScientistPage extends React.Component {
 
     componentDidMount() {
         //this.UpdateStarDistribution();
+        this.UpdateMapData('price')
+        {
+            getAverageData('state', null, null).then(res => {
+                this.setState({ stateMapData: res.results });
+                let priceresult = [];
+                let ratingresult = [];
+                priceresult.push(['State', 'Average Price', 'NumberOfBusiness']);
+                ratingresult.push(['State', 'Average Rating', 'NumberOfBusiness']);
+                if (res.results.length > 0) {
+                    for (let i = 0; i < res.results.length; i++) {
+                        if (res.results[i].state != 'BC') {
+                            priceresult.push([stateMap[res.results[i]['state']], res.results[i]['avg_price'], res.results[i]['num']]);
+                            ratingresult.push([stateMap[res.results[i]['state']], res.results[i]['avg_review'], res.results[i]['num']]);
+                        }
+                    }
+                    this.setState({ statePriceData: priceresult });
+                    this.setState({ stateRatingData: ratingresult });
+                }
+            });
+        }
     }
+
+
+
 
     ratingTab = () => (
         <div>
@@ -735,18 +798,45 @@ class ScientistPage extends React.Component {
     overviewTab = () => (
         <div>
             <Row justify='center'>
-                <h4>Business Overview: </h4>
+                <h3>Business Overview: </h3>
             </Row>
             <Row justify='center' >
                 <Tabs defaultActiveKey="state" centered type="card" size='large' onChange={this.handleTabChange}>
                     <TabPane tab="State" key="state" >
                         <Row justify='center'>
-                            <USMap />
+                            <h4>State Overview</h4>
                         </Row>
+                        <Tabs defaultActiveKey="price" centered type="card" size='large'>
+                            <TabPane tab="Average Price" key="price" >
+                                <Row justify='center'>
+                                    <h5>Price Range: 1 - 4</h5>
+                                </Row>
+                                <Row justify='center'>
+                                    <USMap
+                                        data={this.state.statePriceData}
+                                        options={stateMapOptions} />
+                                </Row>
+                            </TabPane>
+                            <TabPane tab="Average Rating" key="stars" >
+                                <Row justify='center'>
+                                    <h5>Rating Range: 1 - 5</h5>
+                                </Row>
+                                <Row justify='center'>
+                                    <USMap
+                                        data={this.state.stateRatingData}
+                                        options={stateMapOptions} />
+                                </Row>
+                            </TabPane>
+                        </Tabs>
                     </TabPane>
                     <TabPane tab="City" key="city" >
                         <Row justify='center'>
                             <h3>City level map</h3>
+                        </Row>
+                        <Row justify='center'>
+                            <USMap
+                                data={sampleCityData}
+                                options={CityMapOptions} />
                         </Row>
                     </TabPane>
                     <TabPane tab="Postal Code" key="postal_code">
@@ -757,7 +847,7 @@ class ScientistPage extends React.Component {
                 </Tabs>
             </Row>
             <Divider />
-        </div>
+        </div >
     )
 
 

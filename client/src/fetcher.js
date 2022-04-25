@@ -58,8 +58,8 @@ const getPriceDistribution = async (region, name, page, pagesize) => {
     return res.json()
 }
 
-const getAverageData = async (region, name, page, pagesize) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/avg_sci/?${region}&page=${page}&pagesize=${pagesize}`, {
+const getAverageData = async (region, page, pagesize) => {
+    var res = await fetch(`http://${config.server_host}:${config.server_port}/avg_sci/${region}?page=${page}&pagesize=${pagesize}`, {
         method: 'GET',
     })
     return res.json()
