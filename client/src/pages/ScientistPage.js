@@ -16,6 +16,7 @@ import {
 import { getSelectUnstyledUtilityClass } from '@mui/base';
 import FormItem from 'antd/lib/form/FormItem';
 import continuousColorLegend from 'react-vis/dist/legends/continuous-color-legend';
+import { precisionPrefix } from 'd3-format';
 const wideFormat = format('.3r');
 
 const { Column, ColumnGroup } = Table;
@@ -77,7 +78,7 @@ const stateMapOptions = {
     }
 
 };
-const CityMapOptions = {
+const cityMapOptions = {
     region: "US", //United States
     displayMode: 'markers',
     magnifyingGlass: {
@@ -86,6 +87,7 @@ const CityMapOptions = {
     }
 }
 
+const bcCities = ['Vancouver', 'Richmond', 'Burnaby', 'North Vancouver', 'Coquitlam', 'New Westminster', 'Surrey']
 
 function USMap(props) {
     return (
@@ -102,6 +104,7 @@ function USMap(props) {
                     },
                 },
             ]}
+            mapsApiKey="AIzaSyCvUUHkamk-yOY4v2G-Fww8w9D7Eaz11_w"
             chartType="GeoChart"
             width="500px"
             height="400px"
@@ -283,7 +286,11 @@ class ScientistPage extends React.Component {
             stateRatingData: [],
             displayAvgPrice: true,
             cityMapData: [],
+            cityPriceData: [],
+            cityRatingData: [],
             zipMapData: [],
+            zipPriceData: [],
+            zipRatingData: [],
 
             healthStateQuery: '',
             healthData: [],
@@ -489,7 +496,6 @@ class ScientistPage extends React.Component {
         } else {
             this.setState({ displayAvgPrice: false });
         }
-
     }
 
     handleTabChange(key) {
@@ -605,11 +611,31 @@ class ScientistPage extends React.Component {
                     this.setState({ stateRatingData: ratingresult });
                 }
             });
+            getAverageData('city', null, null).then(res => {
+                this.setState({ cityMapData: res.results });
+                let priceresult = [];
+                let ratingresult = [];
+                priceresult.push(['City', 'Average Price', 'NumberOfBusiness']);
+                ratingresult.push(['City', 'Average Rating', 'NumberOfBusiness']);
+                if (res.results.length > 0) {
+                    for (let i = 0; i < res.results.length; i++) {
+                        if (!bcCities.includes(res.results[i]['city'])) {
+                            priceresult.push([res.results[i]['city'], res.results[i]['avg_price'], res.results[i]['num']]);
+                            ratingresult.push([res.results[i]['city'], res.results[i]['avg_review'], res.results[i]['num']]);
+                        }
+                    }
+                    priceresult.sort((a, b) => {
+                        return b[2] - a[2];
+                    })
+                    ratingresult.sort((a, b) => {
+                        return b[2] - a[2];
+                    })
+                    this.setState({ cityPriceData: priceresult.slice(0, 50) });
+                    this.setState({ cityRatingData: ratingresult.slice(0, 50) });
+                }
+            });
         }
     }
-
-
-
 
     ratingTab = () => (
         <div>
@@ -833,17 +859,41 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <h3>City level map</h3>
                         </Row>
-                        <Row justify='center'>
-                            <USMap
-                                data={sampleCityData}
-                                options={CityMapOptions} />
-                        </Row>
+                        <Tabs defaultActiveKey="price" centered type="card" size='large'>
+                            <TabPane tab="Average Price" key="price" >
+                                <Row justify='center'>
+                                    <h5>Price Range: 1 - 4</h5>
+                                </Row>
+                                <Row justify='center'>
+                                    <USMap
+                                        data={this.state.cityPriceData}
+                                        options={cityMapOptions} />
+                                </Row>
+                                <Row justify='center'>
+                                    <p>* Top 50 cities with the most business are listed in the map</p>
+                                </Row>
+                            </TabPane>
+                            <TabPane tab="Average Rating" key="stars" >
+                                <Row justify='center'>
+                                    <h5>Rating Range: 1 - 5</h5>
+                                </Row>
+                                <Row justify='center'>
+                                    <USMap
+                                        data={this.state.cityRatingData}
+                                        options={cityMapOptions} />
+                                </Row>
+                                <Row justify='center'>
+                                    <p>* Top 50 cities with the most business are listed in the map</p>
+                                </Row>
+                            </TabPane>
+                        </Tabs>
+
                     </TabPane>
-                    <TabPane tab="Postal Code" key="postal_code">
+                    {/* <TabPane tab="Postal Code" key="postal_code">
                         <Row justify='center'>
                             <h3>Postal Code level map</h3>
                         </Row>
-                    </TabPane>
+                    </TabPane> */}
                 </Tabs>
             </Row>
             <Divider />
