@@ -493,11 +493,11 @@ class RestaurantsRecommender extends React.Component {
               <Row>
                 <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
                   <label>Your name <span style={{ color: 'red' }}>*</span></label>
-                  <FormInput placeholder={this.state.userNameQuery ? this.state.userNameQuery : 'e.g. John'} value={this.state.userNameQuery} onChange={this.handleUserNameQueryChange} />
+                  <FormInput placeholder={this.state.userNameQuery ? this.state.userNameQuery : 'e.g. Victor'} value={this.state.userNameQuery} onChange={this.handleUserNameQueryChange} />
                 </FormGroup></Col>
                 <Col flex={2}><FormGroup style={{ width: '15vw', margin: '0 auto' }}>
                   <label>Last 6 digit of your user ID <span style={{ color: 'red' }}>*</span></label>
-                  <FormInput placeholder={this.state.userIdQuery ? this.state.userIdQuery : 'e.g. OiezZw'} value={this.state.userIdQuery} onChange={this.handleUserIdQueryChange} />
+                  <FormInput placeholder={this.state.userIdQuery ? this.state.userIdQuery : 'e.g. ucA5aA'} value={this.state.userIdQuery} onChange={this.handleUserIdQueryChange} />
                 </FormGroup></Col>
                 <Col flex={2}><FormGroup style={{ width: '14vw', margin: '0 auto' }}>
                   <label>Location <span style={{ color: 'red' }}>*</span></label>
