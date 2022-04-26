@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef, Component } from 'react'
 
 import { Form, Input, Table, Row, Col, Divider, Slider, Button, Space } from 'antd'
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
+import Deck from '../components/Deck';
+
 import { getUserByNameAndID, getBusinessByUserID, getUserByBusinessID } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
 import TinderCard from 'react-tinder-card'
@@ -369,7 +371,8 @@ class FriendsPage extends React.Component {
                         </Table>
                     </div>
                     <div>
-                        <TinderSwipe db={tinderdb} />
+                        {/* <TinderSwipe db={tinderdb} /> */}
+                        {<Deck />}
                     </div>
 
 
