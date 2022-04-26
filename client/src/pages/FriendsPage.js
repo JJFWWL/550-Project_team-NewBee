@@ -1,34 +1,139 @@
-import React from 'react';
+import React, { useState, useMemo, useRef } from 'react'
 
-import {
-    Form,
-    Input,
-    Table,
-    Pagination,
-    Select,
-    Row,
-    Col,
-    Divider,
-    Slider,
-    Rate,
-    List,
-    Avatar,
-    Button,
-    Switch,
-    Skeleton,
-    Typography,
-    Tag,
-    Space
-} from 'antd'
+import { Form, Input, Table, Row, Col, Divider, Slider, Button, Space } from 'antd'
 import { format } from 'd3-format';
 
 import MenuBar from '../components/MenuBar';
 import { getUserByNameAndID, getBusinessByUserID, getUserByBusinessID } from '../fetcher'
 import { getSelectUnstyledUtilityClass } from '@mui/base';
-import FormItem from 'antd/lib/form/FormItem';
+import TinderCard from 'react-tinder-card'
+
+
 const wideFormat = format('.3r');
 
 const { Column, ColumnGroup } = Table;
+
+const tinderdb = [
+    {
+        name: 'Richard Hendricks',
+        url: './img/richard.jpg'
+    },
+    {
+        name: 'Erlich Bachman',
+        url: './img/erlich.jpg'
+    },
+    {
+        name: 'Monica Hall',
+        url: './img/monica.jpg'
+    },
+    {
+        name: 'Jared Dunn',
+        url: './img/jared.jpg'
+    },
+    {
+        name: 'Dinesh Chugtai',
+        url: './img/dinesh.jpg'
+    }
+];
+
+function TinderSwipe(props) {
+    const [currentIndex, setCurrentIndex] = useState(props.db.length - 1)
+    const [lastDirection, setLastDirection] = useState()
+    // used for outOfFrame closure
+    const currentIndexRef = useRef(currentIndex)
+
+    const childRefs = useMemo(
+        () =>
+            Array(props.db.length)
+                .fill(0)
+                .map((i) => React.createRef()),
+        []
+    )
+
+    const updateCurrentIndex = (val) => {
+        setCurrentIndex(val)
+        currentIndexRef.current = val
+    }
+
+    const canGoBack = currentIndex < props.db.length - 1
+
+    const canSwipe = currentIndex >= 0
+
+    // set last direction and decrease current index
+    const swiped = (direction, nameToDelete, index) => {
+        setLastDirection(direction)
+        updateCurrentIndex(index - 1)
+    }
+
+    const outOfFrame = (name, idx) => {
+        console.log(`${name} (${idx}) left the screen!`, currentIndexRef.current)
+        // handle the case in which go back is pressed before card goes outOfFrame
+        currentIndexRef.current >= idx && childRefs[idx].current.restoreCard()
+        // TODO: when quickly swipe and restore multiple times the same card,
+        // it happens multiple outOfFrame events are queued and the card disappear
+        // during latest swipes. Only the last outOfFrame event should be considered valid
+    }
+
+    const swipe = async (dir) => {
+        if (canSwipe && currentIndex < props.db.length) {
+            await childRefs[currentIndex].current.swipe(dir) // Swipe the card!
+        }
+    }
+
+    // increase current index and show card
+    const goBack = async () => {
+        if (!canGoBack) return
+        const newIndex = currentIndex + 1
+        updateCurrentIndex(newIndex)
+        await childRefs[newIndex].current.restoreCard()
+    }
+
+    return (
+        <div>
+            <link
+                href='https://fonts.googleapis.com/css?family=Damion&display=swap'
+                rel='stylesheet'
+            />
+            <link
+                href='https://fonts.googleapis.com/css?family=Alatsi&display=swap'
+                rel='stylesheet'
+            />
+            <h1>React Tinder Card</h1>
+            <div className='cardContainer'>
+                {props.db.map((character, index) => (
+                    <TinderCard
+                        ref={childRefs[index]}
+                        className='swipe'
+                        key={character.name}
+                        onSwipe={(dir) => swiped(dir, character.name, index)}
+                        onCardLeftScreen={() => outOfFrame(character.name, index)}
+                    >
+                        <div
+                            style={{ backgroundImage: 'url(' + character.url + ')' }}
+                            className='card'
+                        >
+                            <h3>{character.name}</h3>
+                        </div>
+                    </TinderCard>
+                ))}
+            </div>
+            <div className='buttons'>
+                <button style={{ backgroundColor: !canSwipe && '#c3c4d3' }} onClick={() => swipe('left')}>Swipe left!</button>
+                <button style={{ backgroundColor: !canGoBack && '#c3c4d3' }} onClick={() => goBack()}>Undo swipe!</button>
+                <button style={{ backgroundColor: !canSwipe && '#c3c4d3' }} onClick={() => swipe('right')}>Swipe right!</button>
+            </div>
+            {lastDirection ? (
+                <h2 key={lastDirection} className='infoText'>
+                    You swiped {lastDirection}
+                </h2>
+            ) : (
+                <h2 className='infoText'>
+                    Swipe a card or press a button to get Restore Card button visible!
+                </h2>
+            )}
+        </div>
+    )
+}
 
 class FriendsPage extends React.Component {
     constructor(props) {
@@ -99,26 +204,23 @@ class FriendsPage extends React.Component {
         })
     }
 
-
-
-
     updateLoginResult() {
         getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
             console.log(res.results[0]);
             this.setState({
                 userIDQuery: res.results[0].user_id
             })
-        })
 
-        getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
-            this.setState({
-                businessResults: res.results
+            getBusinessByUserID(res.results[0].user_id, null, null).then(res1 => {
+                console.log("business result" + res1.results);
+                this.setState({
+                    businessResults: res1.results
+                });
+                this.setState({ loginVisible: false });
             })
+
         })
-
-
     }
-
 
     updateBusinessSearchResults() {
         getBusinessByUserID(this.state.userIDQuery, null, null).then(res => {
@@ -140,17 +242,17 @@ class FriendsPage extends React.Component {
 
     componentDidMount() {
 
-        getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
-            this.setState({ loginUserResults: res.results })
-        })
+        // getUserByNameAndID(this.state.loginNameQuery, this.state.loginIDQuery, null, null).then(res => {
+        //     this.setState({ loginUserResults: res.results })
+        // })
 
-        getBusinessByUserID(this.state.login, null, null).then(res => {
-            this.setState({ businessResults: res.results })
-        })
+        // getBusinessByUserID(this.state.login, null, null).then(res => {
+        //     this.setState({ businessResults: res.results })
+        // })
 
-        getUserByBusinessID(this.state.businessIDQuery, null, null).then(res => {
-            this.setState({ userResults: res.results })
-        })
+        // getUserByBusinessID(this.state.businessIDQuery, null, null).then(res => {
+        //     this.setState({ userResults: res.results })
+        // })
 
     }
 
@@ -160,7 +262,7 @@ class FriendsPage extends React.Component {
                 <Divider orientation="left">
                     <h3>Login</h3>
                 </Divider>
-                <Row key={"login"}>
+                <Row key={"login"} id={"login"}>
                     <Col span={12} offset={3}>
                         <Form
                             name="basic"
@@ -202,20 +304,16 @@ class FriendsPage extends React.Component {
 
     // oneConnectionBusiness()
 
-
     render() {
         return (
-
             <div>
-
                 <MenuBar />
                 <div className="container" >
-                    {this.login()}
+                    {this.state.loginVisible ? this.login() : null}
                 </div>
                 <Divider orientation="left">
                     <h3>1-Connection</h3>
                 </Divider>
-
                 <div style={{ width: '80vw', margin: '0 auto', marginTop: '5vh' }}>
                     <div class="section one" id="section1" style={{ width: '70vw', margin: '0 auto', marginTop: '2vh' }}>
                         <h5>Favorite Business</h5>
@@ -269,6 +367,9 @@ class FriendsPage extends React.Component {
                                 onFilter={(value, record) => record.N == value}
                             />
                         </Table>
+                    </div>
+                    <div>
+                        <TinderSwipe db={tinderdb} />
                     </div>
 
 

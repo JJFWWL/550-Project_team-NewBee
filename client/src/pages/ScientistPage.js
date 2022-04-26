@@ -870,7 +870,9 @@ class ScientistPage extends React.Component {
                                         options={cityMapOptions} />
                                 </Row>
                                 <Row justify='center'>
-                                    <p>* Top 50 cities with the most business are listed in the map</p>
+                                    <p>* Top 50 cities with the most business are listed in the map
+                                        <br />City locations are auotmatically mapped using Google geocoding API
+                                    </p>
                                 </Row>
                             </TabPane>
                             <TabPane tab="Average Rating" key="stars" >
@@ -883,7 +885,10 @@ class ScientistPage extends React.Component {
                                         options={cityMapOptions} />
                                 </Row>
                                 <Row justify='center'>
-                                    <p>* Top 50 cities with the most business are listed in the map</p>
+                                    <p>* Top 50 cities with the most business are listed in the map
+                                        <br />City locations are auotmatically mapped using Google geocoding API
+                                    </p>
+
                                 </Row>
                             </TabPane>
                         </Tabs>
