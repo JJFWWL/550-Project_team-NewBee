@@ -24,6 +24,8 @@ app.get('/login', routes.login)
 app.get('/friends/friend_business/:userid', routes.friend_business)
 // 2.3
 app.get('/friends/friend_connection/:id', routes.friend_connection)
+// 2.4
+app.get('/friends/friend_one/:id', routes.friend_one)
 
 // 3.1
 app.get('/star_sci/:choice', routes.star_sci)

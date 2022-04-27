@@ -33,10 +33,10 @@ async function search_businesses(req, res) {
   const price = req.query.Price ? `AND RestaurantsPriceRange2 = ${req.query.Price}` : ''
 
   if (req.query.page && !isNaN(req.query.page)) {
-      // This is the case where page is defined.
-      const pagesize = req.query.pagesize ? req.query.pagesize : 10
-      const page = req.query.page
-      connection.query(`SELECT business_id, name, address, city, state, postal_code,
+    // This is the case where page is defined.
+    const pagesize = req.query.pagesize ? req.query.pagesize : 10
+    const page = req.query.page
+    connection.query(`SELECT business_id, name, address, city, state, postal_code,
       stars, review_count, categories,
       RestaurantsPriceRange2 as price_range
       FROM Business
@@ -45,32 +45,32 @@ async function search_businesses(req, res) {
           AND stars>= ${rlow} AND stars<=${rhigh} ${price}
       ORDER BY stars DESC, review_count DESC 
       LIMIT ${pagesize} 
-      OFFSET ${((page-1)*pagesize)}`, 
+      OFFSET ${((page - 1) * pagesize)}`,
       function (error, results, fields) {
-          if (error) {
-              console.log(error)
-              res.json({ error: error })
-          } else if (results) {
-              res.json({ results: results })
-          }
+        if (error) {
+          console.log(error)
+          res.json({ error: error })
+        } else if (results) {
+          res.json({ results: results })
+        }
       });
 
-  } else {     
-      connection.query(`SELECT business_id, name, address, city, state, postal_code,
+  } else {
+    connection.query(`SELECT business_id, name, address, city, state, postal_code,
       stars, review_count, categories,
       RestaurantsPriceRange2 as price_range
       FROM Business
       WHERE Name like '%${name}%' AND state like '%${state}%' AND city like '%${city}%' AND postal_code like '%${zip}%'
           AND categories like '%${category}%'
           AND stars>= ${rlow} AND stars<=${rhigh} ${price}
-      ORDER BY stars DESC, review_count DESC`, 
+      ORDER BY stars DESC, review_count DESC`,
       function (error, results, fields) {
-          if (error) {
-              console.log(error)
-              res.json({ error: error })
-          } else if (results) {
-              res.json({ results: results })
-          }
+        if (error) {
+          console.log(error)
+          res.json({ error: error })
+        } else if (results) {
+          res.json({ results: results })
+        }
       });
   }
 }
@@ -79,10 +79,10 @@ async function search_businesses(req, res) {
 //http://localhost:8080/business/?id=_--ScmaNumIoT2gQanACvg
 async function business(req, res) {
   // TODO: TASK 6: implement and test, potentially writing your own (ungraded) tests
-  if ( req.query.id !== undefined ) {
-      const id = req.query.id
+  if (req.query.id !== undefined) {
+    const id = req.query.id
 
-      connection.query(`WITH num_photos (business_id, num_photo) AS
+    connection.query(`WITH num_photos (business_id, num_photo) AS
       (SELECT business_id, count(*) as num_photo from photo
       WHERE business_id = '${id}')
       SELECT B.business_id, name, categories,
@@ -94,16 +94,16 @@ async function business(req, res) {
           photo_id, caption, label, num_photo
       FROM Business B left join photo P on B.business_id = P.business_id
       left join num_photos N on P.business_id = N.business_id
-      WHERE B.business_id = '${id}'`, 
+      WHERE B.business_id = '${id}'`,
       function (error, results, fields) {
-          if (error) {
-              console.log(error)
-              res.json({ error: error })
-          } else if (results) {
-              res.json({ results: results })
-          }
+        if (error) {
+          console.log(error)
+          res.json({ error: error })
+        } else if (results) {
+          res.json({ results: results })
+        }
       });
-  } 
+  }
 }
 
 
@@ -119,10 +119,10 @@ async function recommend_businesses(req, res) {
   const zip = req.query.Zip ? req.query.Zip : ''
 
   if (req.query.page && !isNaN(req.query.page)) {
-      // This is the case where page is defined.
-      const pagesize = req.query.pagesize ? req.query.pagesize : 10
-      const page = req.query.page
-      connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
+    // This is the case where page is defined.
+    const pagesize = req.query.pagesize ? req.query.pagesize : 10
+    const page = req.query.page
+    connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
       SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
               substring_index(B.categories, ',', 1) keyword
       FROM user U join review R on U.user_id=R.user_id
@@ -138,18 +138,18 @@ async function recommend_businesses(req, res) {
       WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
       ORDER BY B.stars DESC, B.review_count DESC                  
       LIMIT ${pagesize} 
-      OFFSET ${((page-1)*pagesize)}`, 
+      OFFSET ${((page - 1) * pagesize)}`,
       function (error, results, fields) {
-          if (error) {
-              console.log(error)
-              res.json({ error: error })
-          } else if (results) {
-              res.json({ results: results })
-          }
+        if (error) {
+          console.log(error)
+          res.json({ error: error })
+        } else if (results) {
+          res.json({ results: results })
+        }
       });
 
-  } else {     
-      connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
+  } else {
+    connection.query(`WITH K (uid, name, business_id, stars, price_range, keyword) AS (
           SELECT U.user_id, U.name, R.business_id, R.stars, B.RestaurantsPriceRange2,
                   substring_index(B.categories, ',', 1) keyword
           FROM user U join review R on U.user_id=R.user_id
@@ -163,20 +163,28 @@ async function recommend_businesses(req, res) {
               on B.RestaurantsPriceRange2 = K.price_range 
               AND B.stars>=4 AND FIND_IN_SET(K.keyword, categories)
           WHERE city like '%${city}%' and state like '%${state}%' AND postal_code like '%${zip}%'
-          ORDER BY B.stars DESC, B.review_count DESC`, 
+          ORDER BY B.stars DESC, B.review_count DESC`,
       function (error, results, fields) {
-          if (error) {
-              console.log(error)
-              res.json({ error: error })
-          } else if (results) {
-              res.json({ results: results })
-          }
+        if (error) {
+          console.log(error)
+          res.json({ error: error })
+        } else if (results) {
+          res.json({ results: results })
+        }
       });
   }
 }
 
 // page 2.1 login function
+//http://localhost:8080/login?name=Don&uid=0ZxoUw ->correct format
 //http://localhost:8080/login/?name=Don&uid=0ZxoUw
+
+//http://localhost:8080/login/?name=Sparkely&uid=sL-tHA
+
+//reference:
+//id: __-xRn3SOmAoLA80MEsAvA        name: Derek
+//id: __0cgHc1KI1O7WhflPTZFA        name: jon
+
 async function login(req, res) {
   if (req.query.name !== undefined && req.query.uid != undefined) {
     const name = req.query.name;
@@ -204,7 +212,9 @@ async function login(req, res) {
 
 // page 2.2
 //changed for project to get the user favorite business(=5) and return as result
-//http://localhost:8080/friends/friend_business/userid/?page=2&pagesize=5
+//__dUOXQ2Pa149eLgsL-tHA
+//http://localhost:8080/friends/friend_business/Pf7FI0OukC_CEcCz0ZxoUw/?page=2&pagesize=5
+//http://localhost:8080/friends/friend_business/__dUOXQ2Pa149eLgsL-tHA
 async function friend_business(req, res) {
 
   const userid = req.params.userid ? req.params.userid : "Pf7FI0OukC_CEcCz0ZxoUw"
@@ -258,8 +268,9 @@ async function friend_business(req, res) {
 
 // Route 2.3 (handler)
 //changed for project to get the user favorite business(>=4) and return as result
-//http://localhost:8080/friends/friend_connection/businessID/?userID=Pf7FI0OukC_CEcCz0ZxoUw&page=2&pagesize=5
-
+//extra business:aS3Fhk3YHgLvyqM98augMA
+//http://localhost:8080/friends/friend_connection/3dy8So9wPWTYJSsrFvHDMg/?userID=Pf7FI0OukC_CEcCz0ZxoUw&page=2&pagesize=5
+//http://localhost:8080/friends/friend_connection/j-mkLrxKtOzGAh4ymO9bJg/?userID=__dUOXQ2Pa149eLgsL-tHA
 
 async function friend_connection(req, res) {
   const ID = req.params.id ? req.params.id : "3dy8So9wPWTYJSsrFvHDMg"
@@ -281,7 +292,7 @@ async function friend_connection(req, res) {
     ),
       ONE AS (
 
-          SELECT DISTINCT RP.user_id, user.name, 1 AS N
+          SELECT DISTINCT RP.user_id, user.name, user.review_count, user.yelping_since, 1 AS N
           FROM review RP
                    JOIN user ON RP.user_id = user.user_id
           WHERE RP.stars = 5
@@ -296,17 +307,18 @@ async function friend_connection(req, res) {
       
               ),
           TWO AS (
-          SELECT DISTINCT review.user_id, user.name, 2 AS N
+          SELECT DISTINCT review.user_id, user.name,user.review_count, user.yelping_since, 2 AS N
           FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
           JOIN user ON review.user_id= user.user_id
           WHERE review.stars=5  AND review.user_id!='${userID}'
+          LIMIT 1000
           ),
          TOT AS(
          SELECT * FROM ONE
          UNION ALL
          SELECT * FROM TWO
           )
-      SELECT user_id, name, MIN(N) AS N FROM TOT
+      SELECT user_id, name,review_count, yelping_since, MIN(N) AS N FROM TOT
       GROUP BY user_id
       ORDER BY N ${stringLimit}`,
 
@@ -332,7 +344,7 @@ async function friend_connection(req, res) {
   ),
     ONE AS (
 
-        SELECT DISTINCT RP.user_id, user.name, 1 AS N
+        SELECT DISTINCT RP.user_id, user.name, user.review_count, user.yelping_since,1 AS N
         FROM review RP
                  JOIN user ON RP.user_id = user.user_id
         WHERE RP.stars = 5
@@ -347,17 +359,18 @@ async function friend_connection(req, res) {
     
             ),
         TWO AS (
-        SELECT DISTINCT review.user_id, user.name, 2 AS N
+        SELECT DISTINCT review.user_id, user.name,user.review_count, user.yelping_since, 2 AS N
         FROM review JOIN TWO_B ON review.business_id=TWO_B.business_id
         JOIN user ON review.user_id= user.user_id
         WHERE review.stars=5  AND review.user_id!='${userID}'
+        LIMIT 1000
         ),
        TOT AS(
        SELECT * FROM ONE
        UNION ALL
        SELECT * FROM TWO
         )
-    SELECT user_id, name, MIN(N) AS N FROM TOT
+    SELECT user_id, name,review_count, yelping_since, MIN(N) AS N FROM TOT
     GROUP BY user_id
     ORDER BY N `, function (error, results, fields) {
 
@@ -373,17 +386,100 @@ async function friend_connection(req, res) {
   }
 }
 
-//page 3.1 star distribution_state level(input state name)
-//http://localhost:8080/star_sci/choice/?name=OR&page=2&pagesize=5
+// Route 2.4 (optional)
+//only do 1 connection, limit 20 business, select only user with most review connected to one business
+//extra business:aS3Fhk3YHgLvyqM98augMA
+//http://localhost:8080/friends/friend_one/Pf7FI0OukC_CEcCz0ZxoUw/?page=2&pagesize=5
+//http://localhost:8080/friends/friend_one/Pf7FI0OukC_CEcCz0ZxoUw/
 
-async function star_sci(req, res) {
+async function friend_one(req, res) {
+  const ID = req.params.id ? req.params.id : "Pf7FI0OukC_CEcCz0ZxoUw"
 
 
   if (req.query.page && !isNaN(req.query.page)) {
-
     const page = parseInt(req.query.page);
     const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
     const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
+
+
+    connection.query(
+
+      `WITH ZERO_B AS(
+        SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
+    FROM review RP JOIN Business ON RP.business_id=Business.business_id
+    WHERE RP.user_id='${ID}' AND RP.stars=5
+    LIMIT 20
+    ),
+    ONE AS(SELECT DISTINCT user.name as name,user.user_id as user_id, ZERO_B.business_id as business_id,ZERO_B.name as business_name,user.review_count as review_count
+    FROM ZERO_B JOIN review ON ZERO_B.business_id=review.business_id
+                JOIN user ON review.user_id=user.user_id
+    WHERE review.stars=5 AND review.user_id!='${ID}')
+    ,
+    ADDED_ROW AS(
+        SELECT *,ROW_NUMBER() OVER(PARTITION BY business_id ORDER BY review_count DESC) as rn
+        FROM ONE
+        )
+        SELECT name,user_id,business_id,business_name
+        FROM ADDED_ROW
+        WHERE rn=1
+      ORDER BY N ${stringLimit}`,
+
+      function (error, results, fields) {
+        if (error) {
+          console.log(error);
+          res.json({ error: error });
+        } else if (results) {
+          res.json({ results: results });
+        } else {
+          res.json({ results: [] });
+        }
+      }
+    );
+
+  } else {
+    // we have implemented this for you to see how to return results by querying the database
+
+    connection.query(`WITH ZERO_B AS(
+      SELECT DISTINCT RP.business_id,Business.name,Business.address,Business.city,Business.State, Business.new_categories
+  FROM review RP JOIN Business ON RP.business_id=Business.business_id
+  WHERE RP.user_id='${ID}' AND RP.stars=5
+  LIMIT 20
+  ),
+  ONE AS(SELECT DISTINCT user.name as name,user.user_id as user_id, ZERO_B.business_id as business_id,ZERO_B.name as business_name,user.review_count as review_count
+  FROM ZERO_B JOIN review ON ZERO_B.business_id=review.business_id
+              JOIN user ON review.user_id=user.user_id
+  WHERE review.stars=5 AND review.user_id!='${ID}')
+  ,
+  ADDED_ROW AS(
+      SELECT *,ROW_NUMBER() OVER(PARTITION BY business_id ORDER BY review_count DESC) as rn
+      FROM ONE
+      )
+      SELECT name,user_id,business_id,business_name
+      FROM ADDED_ROW
+      WHERE rn=1`, function (error, results, fields) {
+
+      if (error) {
+        console.log(error)
+        res.json({ error: error })
+      } else if (results) {
+        res.json({ results: results })
+      } else {
+        res.json({ results: [] });
+      }
+    });
+  }
+}
+
+//page 3.1 star distribution_state level(input state name)
+//http://localhost:8080/star_sci/state/?name=OR&page=2&pagesize=5
+//http://localhost:8080/star_sci/city/?name=Boston
+//http://localhost:8080/star_sci/zip/?name=02215
+async function star_sci(req, res) {
+  if (req.query.page && !isNaN(req.query.page)) {
+    const page = parseInt(req.query.page);
+    const pageSize = req.query.pagesize && !isNaN(req.query.pagesize) ? parseInt(req.query.pagesize) : 10;
+    const stringLimit = "LIMIT " + (page - 1) * pageSize + "," + pageSize;
+
     if (req.params.choice === 'state') {
       const name = req.query.name ? req.query.name : "MA";
       connection.query(
@@ -392,7 +488,8 @@ async function star_sci(req, res) {
             SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
             FROM BusinessFull
             WHERE state='${name}' 
-            GROUP BY city ${stringLimit}`,
+            GROUP BY city
+            HAVING COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -413,7 +510,8 @@ async function star_sci(req, res) {
           SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
           FROM BusinessFull
           WHERE city='${name}' 
-          GROUP BY postal_code ${stringLimit}`,
+          GROUP BY postal_code
+          HAVING COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -433,6 +531,7 @@ async function star_sci(req, res) {
           FROM BusinessFull
           WHERE postal_code='${name}' 
           GROUP BY stars
+          HAVING COUNT(business_id)>=10
           ORDER BY stars ${stringLimit}`,
 
         function (error, results, fields) {
@@ -460,7 +559,8 @@ async function star_sci(req, res) {
         SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
         FROM BusinessFull
         WHERE state='${name}'
-        GROUP BY city`,
+        GROUP BY city
+        HAVING COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -481,7 +581,8 @@ async function star_sci(req, res) {
       SUM(IF(stars<4 AND stars>=3,1,0))/SUM(IF(stars>0,1,0)) AS 3star_percent,SUM(IF(stars<5 AND stars>=4,1,0))/SUM(IF(stars>0,1,0)) AS 4star_percent, SUM(IF(stars=5,1,0))/SUM(IF(stars>0,1,0)) AS 5star_percent
       FROM BusinessFull
       WHERE city='${name}' 
-      GROUP BY postal_code`,
+      GROUP BY postal_code
+      HAVING COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -501,6 +602,7 @@ async function star_sci(req, res) {
       FROM BusinessFull
       WHERE postal_code='${name}'
       GROUP BY stars
+      HAVING COUNT(business_id)>=10
       ORDER BY stars;`,
 
         function (error, results, fields) {
@@ -521,8 +623,9 @@ async function star_sci(req, res) {
 }
 
 //page 3.2 price distribution_state level(input state name)
-//http://localhost:8080/price_sci/choice/?name=OR&page=2&pagesize=5
-
+//http://localhost:8080/price_sci/state/?name=OR&page=2&pagesize=5
+//http://localhost:8080/price_sci/city/?name=Portland
+//http://localhost:8080/price_sci/zip/?name=97217
 async function price_sci(req, res) {
 
   if (req.query.page && !isNaN(req.query.page)) {
@@ -538,7 +641,7 @@ async function price_sci(req, res) {
             FROM BusinessFull
             WHERE State='${name}'
             GROUP BY city
-            HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 ${stringLimit}`,
+            HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -560,7 +663,7 @@ async function price_sci(req, res) {
           FROM BusinessFull
           WHERE city='${name}'
           GROUP BY postal_code
-          HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 ${stringLimit}`,
+          HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10 ${stringLimit}`,
 
         function (error, results, fields) {
           if (error) {
@@ -577,10 +680,13 @@ async function price_sci(req, res) {
       const name = req.query.name ? req.query.name : "02143";
       connection.query(
         `SELECT RestaurantsPriceRange2, COUNT(RestaurantsPriceRange2)/SUM(COUNT(RestaurantsPriceRange2)) OVER () AS percent
+
           FROM BusinessFull
           WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
           GROUP BY RestaurantsPriceRange2
+          HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10
           ORDER BY RestaurantsPriceRange2 ${stringLimit}`,
+
 
         function (error, results, fields) {
           if (error) {
@@ -608,7 +714,7 @@ async function price_sci(req, res) {
         FROM BusinessFull
         WHERE State='${name}'
         GROUP BY city
-        HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0`,
+        HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -630,7 +736,7 @@ async function price_sci(req, res) {
       FROM BusinessFull
       WHERE city='${name}'
       GROUP BY postal_code
-      HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0`,
+      HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10`,
 
         function (error, results, fields) {
           if (error) {
@@ -650,6 +756,9 @@ async function price_sci(req, res) {
       FROM BusinessFull
       WHERE postal_code='${name}' AND RestaurantsPriceRange2 IS NOT NULL
       GROUP BY RestaurantsPriceRange2
+
+      HAVING SUM(IF(RestaurantsPriceRange2>0,1,0))>0 AND COUNT(business_id)>=10
+
       ORDER BY RestaurantsPriceRange2`,
 
         function (error, results, fields) {
@@ -669,7 +778,9 @@ async function price_sci(req, res) {
   }
 }
 //3.3 location average price/star
-//http://localhost:8080/avg_sci/choice?page=2&pagesize=5 , input choice: state, city, postal_code
+//http://localhost:8080/avg_sci/state?page=2&pagesize=5
+//http://localhost:8080/avg_sci/city
+//http://localhost:8080/avg_sci/postal_code
 async function avg_sci(req, res) {
   const choice = req.params.choice;
 
@@ -682,6 +793,7 @@ async function avg_sci(req, res) {
       `SELECT ${choice}, COUNT(stars) AS num,AVG(RestaurantsPriceRange2) AS avg_price, AVG(stars) AS avg_review
         FROM BusinessFull
         GROUP BY ${choice}
+        HAVING COUNT(stars)>10
         ORDER BY num DESC ${stringLimit}`,
 
       function (error, results, fields) {
@@ -700,6 +812,7 @@ async function avg_sci(req, res) {
       `SELECT ${choice}, COUNT(stars) AS num,AVG(RestaurantsPriceRange2) AS avg_price, AVG(stars) AS avg_review
       FROM BusinessFull
       GROUP BY ${choice}
+      HAVING COUNT(stars)>10
       ORDER BY num DESC`,
 
       function (error, results, fields) {
@@ -717,7 +830,9 @@ async function avg_sci(req, res) {
 }
 
 //3.4 categories_map
-//http://localhost:8080/cat_map/choice?name=Portland , input choice: state, city, postal_code, name is related name
+//http://localhost:8080/cat_map/state?name=MA
+//http://localhost:8080/cat_map/city?name=Boston
+//http://localhost:8080/cat_map/postal_code?name=97217
 async function cat_map(req, res) {
   const choice = req.params.choice;
   const name = req.query.name;
@@ -726,6 +841,7 @@ async function cat_map(req, res) {
       FROM BusinessFull
       WHERE ${choice}='${name}'
       GROUP BY new_categories
+      HAVING COUNT(*)>10
       ORDER BY count DESC`,
 
     function (error, results, fields) {
@@ -746,11 +862,11 @@ async function cat_map(req, res) {
 async function county_health_businesses(req, res) {
 
   const state = req.query.State ? req.query.State : ''
- 
+
   if (req.query.page && !isNaN(req.query.page)) {
-      // This is the case where page is defined.
-      const pagesize = req.query.pagesize ? req.query.pagesize : 10
-      const page = req.query.page
+    // This is the case where page is defined.
+    const pagesize = req.query.pagesize ? req.query.pagesize : 10
+    const page = req.query.page
 
       connection.query(`WITH H (business_id, price_range, stars,
           zip, city, state, fips, county, 
@@ -788,15 +904,16 @@ async function county_health_businesses(req, res) {
       having count(H.business_id)>=10
       ORDER BY H.state, H.health_factors_rank
       LIMIT ${pagesize} 
-      OFFSET ${((page-1)*pagesize)}`, 
+      OFFSET ${((page - 1) * pagesize)}`,
       function (error, results, fields) {
-          if (error) {
-              console.log(error)
-              res.json({ error: error })
-          } else if (results) {
-              res.json({ results: results })
-          }
+        if (error) {
+          console.log(error)
+          res.json({ error: error })
+        } else if (results) {
+          res.json({ results: results })
+        }
       });
+
 
   } else {     
       connection.query(`WITH H (business_id, price_range, stars,
@@ -833,14 +950,14 @@ async function county_health_businesses(req, res) {
     FROM H
     GROUP BY H.state, H.fips, H.county, H.health_factors_rank
     having count(H.business_id)>=10
-    ORDER BY H.state, H.health_factors_rank`, 
+    ORDER BY H.state, H.health_factors_rank`,
       function (error, results, fields) {
-          if (error) {
-              console.log(error)
-              res.json({ error: error })
-          } else if (results) {
-              res.json({ results: results })
-          }
+        if (error) {
+          console.log(error)
+          res.json({ error: error })
+        } else if (results) {
+          res.json({ results: results })
+        }
       });
   }
 }
@@ -855,6 +972,7 @@ module.exports = {
   login,
   friend_business,
   friend_connection,
+  friend_one,
   star_sci,
   price_sci,
   avg_sci,
