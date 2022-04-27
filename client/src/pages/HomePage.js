@@ -24,7 +24,7 @@ class Home extends React.Component {
 <br/>
 
 
-  <h1 style={{fontFamily: 'fantasy', fontWeight:900, color:'white'}}> Welcome to our Yelp Project! </h1>
+  <h1 style={{fontFamily: 'fantasy', fontWeight:900, color:'white'}}> Welcome to FoodBook! </h1>
 <br/>
   <h3 style={{fontFamily: 'fantasy', fontWeight:900, color:'white'}}> By Team NewBee </h3>
 
