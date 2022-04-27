@@ -108,7 +108,7 @@ async function business(req, res) {
 
 
 // 1.2 A recommend businesses based on features of the top-rated businesses in user history
-//http://localhost:8080/recommend/businesses/?UserId=zzYDSfrxsYaydnr8TngD4A&UserName=Nick&State=OR&City=Portland
+//http://localhost:8080/recommend/businesses/?UserId=TngD4A&UserName=Nick&State=OR&City=Portland
 async function recommend_businesses(req, res) {
   // TODO: TASK 9: implement and test, potentially writing your own (ungraded) tests
   // IMPORTANT: in your SQL LIKE matching, use the %query% format to match the search query to substrings, not just the entire string
@@ -858,7 +858,7 @@ async function cat_map(req, res) {
 }
 
 // 3.5 County Health Rankings and price/star frequency distributions
-//http://localhost:8080/health_ranking_businesses_stats/?State=OR
+//http://localhost:8080/county_health_businesses/?State=OR
 async function county_health_businesses(req, res) {
 
   const state = req.query.State ? req.query.State : ''
@@ -868,17 +868,17 @@ async function county_health_businesses(req, res) {
     const pagesize = req.query.pagesize ? req.query.pagesize : 10
     const page = req.query.page
 
-    connection.query(`WITH H (business_id, price_range, stars,
-          zip, city, state, fips, county, num_ranked_counties,
+      connection.query(`WITH H (business_id, price_range, stars,
+          zip, city, state, fips, county, 
           health_factors_rank) AS
           (SELECT B.business_id, RestaurantsPriceRange2, stars,
-          B.postal_code, B.city, B.state, R.fips, R.county, R.number_of_ranked_counties,
+          B.postal_code, B.city, B.state, R.fips, R.county, 
           R.health_factors_rank
       FROM BusinessFull B join Zip_county_crosswalk Z
           on B.postal_code = Z.zip AND B.city = Z.city AND B.state = Z.state
           join County_health_ranking R on Z.fips = R.fips
           WHERE B.state like '%${state}%')
-      SELECT H.state, H.num_ranked_counties, H.fips, H.county, H.health_factors_rank,
+      SELECT H.state, H.fips, H.county, H.health_factors_rank,
             SUM(IF(H.price_range = 1, 1, 0)) as price1_count,
             SUM(IF(H.price_range = 2, 1, 0)) as price2_count,
             SUM(IF(H.price_range = 3, 1, 0)) as price3_count,
@@ -914,18 +914,19 @@ async function county_health_businesses(req, res) {
         }
       });
 
-  } else {
-    connection.query(`WITH H (business_id, price_range, stars,
-        zip, city, state, fips, county, num_ranked_counties,
+
+  } else {     
+      connection.query(`WITH H (business_id, price_range, stars,
+        zip, city, state, fips, county, 
         health_factors_rank) AS
         (SELECT B.business_id, RestaurantsPriceRange2, stars,
-        B.postal_code, B.city, B.state, R.fips, R.county, R.number_of_ranked_counties,
+        B.postal_code, B.city, B.state, R.fips, R.county, 
         R.health_factors_rank
     FROM BusinessFull B join Zip_county_crosswalk Z
         on B.postal_code = Z.zip AND B.city = Z.city AND B.state = Z.state
         join County_health_ranking R on Z.fips = R.fips
         WHERE B.state like '%${state}%')
-    SELECT H.state, H.num_ranked_counties, H.fips, H.county, H.health_factors_rank,
+    SELECT H.state, H.fips, H.county, H.health_factors_rank,
            SUM(IF(H.price_range = 1, 1, 0)) as price1_count,
            SUM(IF(H.price_range = 2, 1, 0)) as price2_count,
            SUM(IF(H.price_range = 3, 1, 0)) as price3_count,
