@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Input, Table, Radio, Cascader, Select, Row, Col, Divider, Space, Tabs, Button, Spin, Alert, Result } from 'antd'
-import { SearchOutlined, StarFilled } from '@ant-design/icons';
 import { Bar, Pie, measureTextWidth } from '@ant-design/plots';
 import { Chart } from "react-google-charts";
 import { format } from 'd3-format';
@@ -13,10 +12,6 @@ import {
     getAverageData,
     getHealthData
 } from '../fetcher'
-import { getSelectUnstyledUtilityClass } from '@mui/base';
-import FormItem from 'antd/lib/form/FormItem';
-import continuousColorLegend from 'react-vis/dist/legends/continuous-color-legend';
-import { precisionPrefix } from 'd3-format';
 const wideFormat = format('.3r');
 
 const { Column, ColumnGroup } = Table;
@@ -92,18 +87,6 @@ const bcCities = ['Vancouver', 'Richmond', 'Burnaby', 'North Vancouver', 'Coquit
 function USMap(props) {
     return (
         <Chart
-            chartEvents={[
-                {
-                    eventName: "select",
-                    callback: ({ chartWrapper }) => {
-                        const chart = chartWrapper.getChart();
-                        const selection = chart.getSelection();
-                        if (selection.length === 0) return;
-                        const region = props.data[selection[0].row + 1];
-                        console.log("Selected : " + region);
-                    },
-                },
-            ]}
             mapsApiKey="AIzaSyCvUUHkamk-yOY4v2G-Fww8w9D7Eaz11_w"
             chartType="GeoChart"
             width="500px"
@@ -115,7 +98,6 @@ function USMap(props) {
     );
 
 }
-
 
 
 const CityOptions = [
@@ -215,6 +197,7 @@ const CityOptions = [
     }
 ];
 
+
 //Properties : {data, xField, yField, seriesField, xAxisLabel, yAxisLabel}
 function BarPlot(props) {
     return < Bar {...{
@@ -264,6 +247,39 @@ function DonutPlot(props) {
     return <Pie {...config} />;
 };
 
+
+function PostalCodeTable(props) {
+    const postCodecolumns = [
+        {
+            title: 'Postal Code',
+            dataIndex: 'postal_code',
+            key: 'postal_code',
+            sorter: (a, b) => a.postal_code - b.postal_code,
+        },
+        {
+            title: 'Number',
+            dataIndex: 'num',
+            key: 'num',
+            sorter: (a, b) => a.num - b.num,
+        },
+        {
+            title: 'Average Price',
+            dataIndex: 'avg_price',
+            key: 'avg_price',
+            sorter: (a, b) => a.avg_price - b.avg_price,
+
+        },
+        {
+            title: 'Average Rating',
+            dataIndex: 'avg_review',
+            key: 'avg_review',
+            sorter: (a, b) => a.avg_price - b.avg_price,
+        },
+    ];
+
+    return <Table columns={postCodecolumns} dataSource={props.data} />
+}
+
 class ScientistPage extends React.Component {
     constructor(props) {
         super(props)
@@ -288,9 +304,7 @@ class ScientistPage extends React.Component {
             cityMapData: [],
             cityPriceData: [],
             cityRatingData: [],
-            zipMapData: [],
-            zipPriceData: [],
-            zipRatingData: [],
+            zipAvgData: [],
 
             healthStateQuery: '',
             healthData: [],
@@ -304,6 +318,8 @@ class ScientistPage extends React.Component {
         this.handleCityNameQueryChange = this.handleCityNameQueryChange.bind(this)
         this.handleZipNameQueryChange = this.handleZipNameQueryChange.bind(this)
         this.handleTabChange = this.handleTabChange.bind(this)
+        this.handleRootTabChange = this.handleRootTabChange.bind(this)
+
 
         //Query 3.5 method onChange of healthStateQuery
         this.handleHealthStateQueryChange = this.handleHealthStateQueryChange.bind(this)
@@ -311,7 +327,13 @@ class ScientistPage extends React.Component {
         this.UpdateStarDistribution = this.UpdateStarDistribution.bind(this)
         this.UpdatePrice = this.UpdatePrice.bind(this)
         this.UpdateMapData = this.UpdateMapData.bind(this)
+        this.UpdateZipAvgData = this.UpdateZipAvgData.bind(this)
+        this.UpdateStateStarSelect = this.UpdateStateStarSelect.bind(this)
+        this.UpdateStatePriceSelect = this.UpdateStatePriceSelect.bind(this)
+        this.UpdateCityStarCascader = this.UpdateCityStarCascader.bind(this)
+        this.UpdateCityPriceCascader = this.UpdateCityPriceCascader.bind(this)
         this.updateHealthData = this.updateHealthData.bind(this)
+
     }
 
     enterLoading = index => {
@@ -342,20 +364,24 @@ class ScientistPage extends React.Component {
 
     handleStateNameQueryChange(value) {
         this.setState({
+            regionQuery: 'state',
             stateNameQuery: value
         })
     }
 
     handleCityNameQueryChange(value) {
         this.setState({
+            regionQuery: 'city',
             stateNameQuery: value[0],
             cityNameQuery: value[1]
         })
     }
 
     handleZipNameQueryChange(e) {
-
-        this.setState({ zipNameQuery: e.target.value })
+        this.setState({
+            regionQuery: 'zip',
+            zipNameQuery: e.target.value
+        })
     }
 
     handleHealthStateQueryChange(value) {
@@ -391,12 +417,20 @@ class ScientistPage extends React.Component {
 
         for (let i = 0; i < dataset.length; i++) {
             let element = dataset[i];
-            var sum = element[countKey[1]] + element[countKey[2]] + element[countKey[3]] + element[countKey[4]] + element[countKey[5]];
-            result.push({ "title": element[title], [type]: "$", "count": element[countKey[1]], "sum": sum });
-            result.push({ "title": element[title], [type]: "$$", "count": element[countKey[2]], "sum": sum });
-            result.push({ "title": element[title], [type]: "$$$", "count": element[countKey[3]], "sum": sum });
-            result.push({ "title": element[title], [type]: "$$$$", "count": element[countKey[4]], "sum": sum });
-            result.push({ "title": element[title], [type]: "$$$$$", "count": element[countKey[5]], "sum": sum });
+            if (type === 'stars') {
+                var sum = element[countKey[1]] + element[countKey[2]] + element[countKey[3]] + element[countKey[4]] + element[countKey[5]];
+                result.push({ "title": element[title], [type]: "1-star", "count": element[countKey[1]], "sum": sum });
+                result.push({ "title": element[title], [type]: "2-stars", "count": element[countKey[2]], "sum": sum });
+                result.push({ "title": element[title], [type]: "3-stars", "count": element[countKey[3]], "sum": sum });
+                result.push({ "title": element[title], [type]: "4-stars", "count": element[countKey[4]], "sum": sum });
+                result.push({ "title": element[title], [type]: "5-stars", "count": element[countKey[5]], "sum": sum });
+            } else {
+                var sum = element[countKey[1]] + element[countKey[2]] + element[countKey[3]] + element[countKey[4]];
+                result.push({ "title": element[title], [type]: "$", "count": element[countKey[1]], "sum": sum });
+                result.push({ "title": element[title], [type]: "$$", "count": element[countKey[2]], "sum": sum });
+                result.push({ "title": element[title], [type]: "$$$", "count": element[countKey[3]], "sum": sum });
+                result.push({ "title": element[title], [type]: "$$$$", "count": element[countKey[4]], "sum": sum });
+            }
         }
 
         result = result.sort(function (a, b) {
@@ -443,12 +477,14 @@ class ScientistPage extends React.Component {
             getStarDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
                 let tempData = [];
                 if (res.results.length > 0) {
-                    tempData.push({ "stars": "2-2.5 Stars", "count": res.results[0]['count'] + res.results[1]['count'] });
-                    tempData.push({ "stars": "3-3.5 Stars", "count": res.results[2]['count'] + res.results[3]['count'] });
-                    tempData.push({ "stars": "4-4.5 Stars", "count": res.results[4]['count'] + res.results[5]['count'] });
-                    tempData.push({ "stars": "5 Stars", "count": res.results[6]['count'] });
+                    tempData.push({ "stars": "2-2.5 Stars", "count": res.results[0]['count'] + res.results[1]['count'], "percent": Math.round((res.results[0]['percent'] + res.results[1]['percent']) * 100) });
+                    tempData.push({ "stars": "3-3.5 Stars", "count": res.results[2]['count'] + res.results[3]['count'], "percent": Math.round((res.results[2]['percent'] + res.results[3]['percent']) * 100) });
+                    tempData.push({ "stars": "4-4.5 Stars", "count": res.results[4]['count'] + res.results[5]['count'], "percent": Math.round((res.results[4]['percent'] + res.results[5]['percent']) * 100) });
+                    tempData.push({ "stars": "5 Stars", "count": res.results[6]['count'], "percent": Math.round((res.results[5]['percent']) * 100) });
                 }
-                this.setState({ starDonutPlot: tempData });
+                this.setState({
+                    starDonutPlot: tempData
+                });
             });
         }
     }
@@ -480,10 +516,13 @@ class ScientistPage extends React.Component {
             getPriceDistribution(this.state.regionQuery, NameQuery, null, null).then(res => {
                 let result = [];
                 if (res.results.length > 0) {
+                    // console.log("result i is" + [...res.results[0]]);
                     result.push({ 'price': '$', 'percent': Math.round(res.results[0]['percent'] * 100) });
                     result.push({ 'price': '$$', 'percent': Math.round(res.results[1]['percent'] * 100) });
                     result.push({ 'price': '$$$', 'percent': Math.round(res.results[2]['percent'] * 100) });
-                    result.push({ 'price': '$$$$', 'percent': Math.round(res.results[3]['percent'] * 100) });
+                    if (res.results[3] !== undefined) {
+                        result.push({ 'price': '$$$$', 'percent': Math.round(res.results[3]['percent'] * 100) });
+                    }
                 }
                 this.setState({ priceDonutPlot: result });
             });
@@ -498,6 +537,21 @@ class ScientistPage extends React.Component {
         }
     }
 
+    handleRootTabChange() {
+        this.setState({
+            stateNameQuery: '',
+            cityNameQuery: '',
+            zipNameQuery: '',
+            starDistribution: [],
+            priceDistribution: [],
+            starBarPlot: [],
+            priceBarPlot: [],
+            starDonutPlot: [],
+            priceDonutPlot: [],
+        });
+    }
+
+
     handleTabChange(key) {
         this.setState({
             stateNameQuery: '',
@@ -507,6 +561,8 @@ class ScientistPage extends React.Component {
             priceDistribution: [],
             starBarPlot: [],
             priceBarPlot: [],
+            starDonutPlot: [],
+            priceDonutPlot: [],
         });
 
         if (key === 'state') {
@@ -523,8 +579,6 @@ class ScientistPage extends React.Component {
             })
         }
     }
-
-
 
     updateHealthData() {
         getHealthData(this.state.healthStateQuery, null, null).then(res => {
@@ -590,8 +644,58 @@ class ScientistPage extends React.Component {
         })
     }
 
+    UpdateZipAvgData() {
+        getAverageData('postal_code', null, null).then(res => {
+            console.log(res.results);
+            this.setState({
+                zipAvgData: res.results,
+            })
+        })
+    }
+
+    UpdateStateStarSelect(value) {
+        this.setState({
+            regionQuery: 'state',
+            stateNameQuery: value
+        }, () => {
+            this.UpdateStarDistribution();
+        })
+    }
+
+    UpdateCityStarCascader(value) {
+        this.setState({
+            regionQuery: 'city',
+            stateNameQuery: value[0],
+            cityNameQuery: value[1]
+        }, () => {
+            this.UpdateStarDistribution();
+        })
+    }
+
+    UpdateStatePriceSelect(value) {
+        this.setState({
+            regionQuery: 'state',
+            stateNameQuery: value
+        }, () => {
+            this.UpdatePrice();
+        })
+    }
+
+    UpdateCityPriceCascader(value) {
+        this.setState({
+            regionQuery: 'city',
+            stateNameQuery: value[0],
+            cityNameQuery: value[1]
+        }, () => {
+            this.UpdatePrice();
+        })
+    }
+
+
     componentDidMount() {
-        //this.UpdateStarDistribution();
+
+        this.UpdateZipAvgData();
+
         this.UpdateMapData('price')
         {
             getAverageData('state', null, null).then(res => {
@@ -635,6 +739,8 @@ class ScientistPage extends React.Component {
                 }
             });
         }
+
+
     }
 
     ratingTab = () => (
@@ -648,16 +754,16 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Select style={{ width: 150 }} onChange={this.handleStateNameQueryChange}>
+                                <Select style={{ width: 150 }} onChange={this.UpdateStateStarSelect}>
                                     <Option value="MA">Massachusetts</Option>
                                     <Option value="OH">Ohio</Option>
                                     <Option value="OR">Oregon</Option>
                                     <Option value="TX">Texas</Option>
                                     <Option value="WA">Washington</Option>
                                 </Select>
-                                <Button type="primary" icon={<SearchOutlined />} size="medium" onClick={this.UpdateStarDistribution}>
+                                {/* <Button type="primary" icon={<SearchOutlined />} size="medium" onClick={this.UpdateStarDistribution}>
                                     Search
-                                </Button>
+                                </Button> */}
                             </Space>
                         </Row>
                         <Row justify='center'>
@@ -680,9 +786,9 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Cascader size="" options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+                                <Cascader size="" options={CityOptions} onChange={this.UpdateCityStarCascader} placeholder="Please select" />
                                 &nbsp;
-                                <Button type="primary" size="medium" onClick={this.UpdateStarDistribution}>Search</Button>
+                                {/* <Button type="primary" size="medium" onClick={this.UpdateStarDistribution}>Search</Button> */}
                             </Space>
                         </Row>
                         <Row justify='center'>
@@ -713,10 +819,10 @@ class ScientistPage extends React.Component {
                         </Row>
 
                         <Row justify='center'>
-                            {this.state.starDonutPlot == 0 ? <Result title="Input a valid postal code." /> :
+                            {this.state.starDonutPlot == 0 || this.state.zipNameQuery === '' ? <Result title="Input a valid postal code." /> :
                                 <DonutPlot
                                     data={this.state.starDonutPlot}
-                                    angleField="count"
+                                    angleField="percent"
                                     colorField="stars"
                                     title="Business Rating"
                                 />
@@ -740,16 +846,16 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Select style={{ width: 150 }} onChange={this.handleStateNameQueryChange}>
+                                <Select style={{ width: 150 }} onChange={this.UpdateStatePriceSelect}>
                                     <Option value="MA">Massachusetts</Option>
                                     <Option value="OH">Ohio</Option>
                                     <Option value="OR">Oregon</Option>
                                     <Option value="TX">Texas</Option>
                                     <Option value="WA">Washington</Option>
                                 </Select>
-                                <Button type="primary" icon={<SearchOutlined />} size="medium" onClick={this.UpdatePrice}>
+                                {/* <Button type="primary" icon={<SearchOutlined />} size="medium" onClick={this.UpdatePrice}>
                                     Search
-                                </Button>
+                                </Button> */}
                             </Space>
                         </Row>
                         <Row justify='center'>
@@ -772,9 +878,9 @@ class ScientistPage extends React.Component {
                         <Row justify='center'>
                             <Space>
                                 <h4>Select a state:   </h4>
-                                <Cascader size="medium" options={CityOptions} onChange={this.handleCityNameQueryChange} placeholder="Please select" />
+                                <Cascader size="medium" options={CityOptions} onChange={this.UpdateCityPriceCascader} placeholder="Please select" />
 
-                                <Button type="primary" size="medium" onClick={this.UpdatePrice}>Search</Button>
+                                {/* <Button type="primary" size="medium" onClick={this.UpdatePrice}>Search</Button> */}
                             </Space>
                         </Row>
                         <Row justify='center'>
@@ -805,7 +911,7 @@ class ScientistPage extends React.Component {
                         </Row>
 
                         <Row justify='center'>
-                            {this.state.priceDonutPlot == 0 ? <Result title="Input a valid postal code." /> :
+                            {this.state.priceDonutPlot == 0 || this.state.zipNameQuery === '' ? <Result title="Input a valid postal code." /> :
                                 <DonutPlot
                                     data={this.state.priceDonutPlot}
                                     angleField="percent"
@@ -857,7 +963,8 @@ class ScientistPage extends React.Component {
                     </TabPane>
                     <TabPane tab="City" key="city" >
                         <Row justify='center'>
-                            <h3>City level map</h3>
+                            <h3>Top 50 cities with the most business</h3>
+                            <Divider />
                         </Row>
                         <Tabs defaultActiveKey="price" centered type="card" size='large'>
                             <TabPane tab="Average Price" key="price" >
@@ -894,11 +1001,16 @@ class ScientistPage extends React.Component {
                         </Tabs>
 
                     </TabPane>
-                    {/* <TabPane tab="Postal Code" key="postal_code">
+                    <TabPane tab="Postal Code" key="postal_code">
                         <Row justify='center'>
                             <h3>Postal Code level map</h3>
                         </Row>
-                    </TabPane> */}
+                        <Row justify='center'>
+                            <PostalCodeTable
+                                data={this.state.zipAvgData}
+                            />
+                        </Row>
+                    </TabPane>
                 </Tabs>
             </Row>
             <Divider />
@@ -983,10 +1095,10 @@ class ScientistPage extends React.Component {
             <div>
                 <MenuBar />
                 <Tabs defaultActiveKey="1" centered type="card" size='large' onChange={this.handleTabChange} >
-                    <TabPane tab="Rating" key="1">
+                    <TabPane tab="Star Rating" key="1">
                         {this.ratingTab()}
                     </TabPane>
-                    <TabPane tab="Price" key="2">
+                    <TabPane tab="Price Level" key="2">
                         {this.priceTab()}
                     </TabPane>
                     <TabPane tab="Overview" key="3">
