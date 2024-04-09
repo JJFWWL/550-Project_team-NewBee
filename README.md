@@ -13,6 +13,9 @@ datasets that contain businesses, reviews, users, and photos, with the County He
 ## Database ER Diagram
 ![image](https://github.com/JJFWWL/550-Project_team-NewBee/blob/main/report/DB_ER_Diagram.png)
 
+## Project API Flow Chart
+![image](https://github.com/JJFWWL/550-Project_team-NewBee/blob/main/report/foodbook_API_flow.png)
+
 ## Web-app Function: Business Searcher
 ![image](https://github.com/JJFWWL/550-Project_team-NewBee/blob/main/report/web_page1.png)
 
